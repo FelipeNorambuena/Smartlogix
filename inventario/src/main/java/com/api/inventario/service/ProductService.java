@@ -36,8 +36,9 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductResponse findBySku(String sku) {
-        return ProductResponse.from(productRepository.findBySku(sku)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado para SKU " + sku)));
+        String normalizedSku = normalizeSku(sku);
+        return ProductResponse.from(productRepository.findBySku(normalizedSku)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado para SKU " + normalizedSku)));
     }
 
     public ProductResponse create(ProductCreateRequest request) {
