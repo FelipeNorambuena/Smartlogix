@@ -18,38 +18,52 @@ import org.hibernate.annotations.UuidGenerator;
 @Table(name = "inventory")
 public class Inventory {
 
+    /*
+     * Entidad JPA que guarda el stock de un producto.
+     * La relacion con Product es uno a uno: cada producto tiene como maximo
+     * una fila de inventario.
+     */
     @Id
     @GeneratedValue
     @UuidGenerator
     private UUID id;
 
+    // Producto asociado. LAZY evita cargar el producto hasta que se necesite.
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false, unique = true)
     private Product product;
 
+    // Stock total disponible fisicamente o logicamente para el producto.
     @Column(name = "stock_available", nullable = false)
     private int stockAvailable;
 
+    // Stock reservado por pedidos u operaciones pendientes.
     @Column(name = "stock_reserved", nullable = false)
     private int stockReserved;
 
+    // Ubicacion de bodega o referencia interna de almacenamiento.
     @Column(name = "warehouse_location")
     private String warehouseLocation;
 
+    // Umbral que indica cuando el producto deberia reponerse.
     @Column(name = "reorder_point", nullable = false)
     private int reorderPoint;
 
+    // Referencia opcional al id del sistema antiguo usado durante migraciones.
     @Column(name = "legacy_inventory_id", unique = true)
     private Integer legacyInventoryId;
 
+    // Fecha de creacion administrada por la entidad antes de persistir.
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    // Fecha de ultima modificacion actualizada automaticamente por callbacks JPA.
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
     @PrePersist
     void prePersist() {
+        // En una insercion, ambas fechas parten con el mismo instante.
         OffsetDateTime now = OffsetDateTime.now();
         createdAt = now;
         updatedAt = now;
@@ -57,6 +71,7 @@ public class Inventory {
 
     @PreUpdate
     void preUpdate() {
+        // En cada actualizacion solo cambia updatedAt; createdAt queda fijo.
         updatedAt = OffsetDateTime.now();
     }
 

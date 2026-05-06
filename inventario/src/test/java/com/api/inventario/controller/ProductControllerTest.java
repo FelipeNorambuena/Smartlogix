@@ -1,17 +1,23 @@
 package com.api.inventario.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.api.inventario.dto.ProductCreateRequest;
 import com.api.inventario.dto.ProductResponse;
+import com.api.inventario.dto.ProductUpdateRequest;
 import com.api.inventario.exception.ResourceNotFoundException;
 import com.api.inventario.service.ProductService;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +26,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+/*
+ * Pruebas web del ProductController.
+ * Usan MockMvc para probar rutas HTTP sin levantar un servidor real y Mockito
+ * para aislar el controller de la logica del service.
+ */
 @WebMvcTest(ProductController.class)
 class ProductControllerTest {
 
@@ -33,7 +44,21 @@ class ProductControllerTest {
     private ProductService productService;
 
     @Test
+    void findAllReturnsActiveProducts() throws Exception {
+        // Verifica que GET /api/products responda una lista JSON de productos.
+        UUID productId = UUID.randomUUID();
+        ProductResponse response = productResponse(productId, "SLX-001", "Producto test");
+        when(productService.findAllActive()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(productId.toString()))
+                .andExpect(jsonPath("$[0].sku").value("SLX-001"));
+    }
+
+    @Test
     void getProductReturnsNotFound() throws Exception {
+        // Verifica que una excepcion del service se traduzca a HTTP 404.
         UUID productId = UUID.randomUUID();
         when(productService.findById(productId))
                 .thenThrow(new ResourceNotFoundException("Producto no encontrado con id " + productId));
@@ -44,7 +69,21 @@ class ProductControllerTest {
     }
 
     @Test
+    void findProductBySkuReturnsProduct() throws Exception {
+        // Verifica busqueda por SKU usando una ruta distinta a la busqueda por UUID.
+        UUID productId = UUID.randomUUID();
+        ProductResponse response = productResponse(productId, "SLX-999", "Producto test");
+        when(productService.findBySku("SLX-999")).thenReturn(response);
+
+        mockMvc.perform(get("/api/products/sku/{sku}", "SLX-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(productId.toString()))
+                .andExpect(jsonPath("$.sku").value("SLX-999"));
+    }
+
+    @Test
     void createProductReturnsCreated() throws Exception {
+        // Verifica que el alta de producto responda 201 Created y devuelva el body.
         UUID productId = UUID.randomUUID();
         ProductCreateRequest request = new ProductCreateRequest(
                 "SLX-999",
@@ -52,16 +91,7 @@ class ProductControllerTest {
                 null,
                 BigDecimal.valueOf(12990),
                 "Categoria");
-        ProductResponse response = new ProductResponse(
-                productId,
-                "SLX-999",
-                "Producto test",
-                null,
-                BigDecimal.valueOf(12990),
-                "Categoria",
-                true,
-                null,
-                null);
+        ProductResponse response = productResponse(productId, "SLX-999", "Producto test");
         when(productService.create(any(ProductCreateRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/products")
@@ -70,5 +100,73 @@ class ProductControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(productId.toString()))
                 .andExpect(jsonPath("$.sku").value("SLX-999"));
+    }
+
+    @Test
+    void createProductRejectsInvalidPayload() throws Exception {
+        // Verifica validaciones del DTO antes de llamar a la capa de negocio.
+        String payload = """
+                {
+                  "sku": "",
+                  "name": "",
+                  "unitPrice": -1
+                }
+                """;
+
+        mockMvc.perform(post("/api/products")
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("La solicitud contiene datos invalidos"))
+                .andExpect(jsonPath("$.details.sku").exists())
+                .andExpect(jsonPath("$.details.name").exists())
+                .andExpect(jsonPath("$.details.unitPrice").exists());
+    }
+
+    @Test
+    void updateProductReturnsUpdatedValues() throws Exception {
+        // Verifica que PUT /api/products/{id} responda los valores actualizados.
+        UUID productId = UUID.randomUUID();
+        ProductUpdateRequest request = new ProductUpdateRequest(
+                "SLX-999",
+                "Producto actualizado",
+                "Nueva descripcion",
+                BigDecimal.valueOf(13990),
+                "Categoria",
+                true);
+        ProductResponse response = productResponse(productId, "SLX-999", "Producto actualizado");
+        when(productService.update(eq(productId), any(ProductUpdateRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/products/{id}", productId)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(productId.toString()))
+                .andExpect(jsonPath("$.name").value("Producto actualizado"));
+    }
+
+    @Test
+    void deleteProductReturnsNoContent() throws Exception {
+        // Verifica baja logica expuesta como HTTP 204 No Content.
+        UUID productId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/products/{id}", productId))
+                .andExpect(status().isNoContent());
+
+        verify(productService).softDelete(productId);
+    }
+
+    private ProductResponse productResponse(UUID productId, String sku, String name) {
+        // Helper para no repetir la construccion de respuestas en cada prueba.
+        return new ProductResponse(
+                productId,
+                sku,
+                name,
+                null,
+                BigDecimal.valueOf(12990),
+                "Categoria",
+                true,
+                null,
+                null);
     }
 }

@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/inventory")
 public class InventoryController {
 
+    /*
+     * Controller HTTP para inventario.
+     * Las rutas trabajan por productId porque el stock pertenece a un producto
+     * unico y no se administra como recurso separado desde la API publica.
+     */
     private final InventoryService inventoryService;
 
     public InventoryController(InventoryService inventoryService) {
@@ -26,16 +31,19 @@ public class InventoryController {
 
     @GetMapping
     public List<InventoryResponse> findAll() {
+        // Lista todas las filas de inventario junto con datos basicos del producto.
         return inventoryService.findAll();
     }
 
     @GetMapping("/{productId}")
     public InventoryResponse findByProductId(@PathVariable UUID productId) {
+        // Recupera la ficha completa de inventario asociada a un producto.
         return inventoryService.findByProductId(productId);
     }
 
     @GetMapping("/{productId}/stock")
     public StockResponse findStockByProductId(@PathVariable UUID productId) {
+        // Entrega una vista resumida enfocada en disponibilidad de stock.
         return inventoryService.findStockByProductId(productId);
     }
 
@@ -43,6 +51,7 @@ public class InventoryController {
     public InventoryResponse updateByProductId(
             @PathVariable UUID productId,
             @Valid @RequestBody InventoryUpdateRequest request) {
+        // Crea o actualiza el inventario del producto con valores absolutos.
         return inventoryService.updateByProductId(productId, request);
     }
 }
