@@ -9,6 +9,16 @@
             "projectName": "envios",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-InventarioApplication<inventario>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.api.inventario.InventarioApplication",
+            "projectName": "inventario",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

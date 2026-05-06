@@ -13,7 +13,7 @@ import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 
 @Entity
-@Table(name = "products", schema = "inventory")
+@Table(name = "products")
 public class Product {
 
     @Id

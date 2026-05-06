@@ -12,13 +12,13 @@ import com.api.inventario.dto.InventoryResponse;
 import com.api.inventario.dto.InventoryUpdateRequest;
 import com.api.inventario.dto.StockResponse;
 import com.api.inventario.service.InventoryService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(InventoryController.class)
 class InventoryControllerTest {
