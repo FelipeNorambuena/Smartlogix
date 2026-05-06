@@ -1,0 +1,147 @@
+{
+  "info": {
+    "name": "SmartLogix - Inventario",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Listar productos activos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/products"
+          }
+        },
+        {
+          "name": "Buscar producto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Buscar producto por SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/products/sku/{{sku}}"
+          }
+        },
+        {
+          "name": "Crear producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SLX-999\",\n  \"name\": \"Producto test\",\n  \"description\": \"Descripcion del producto\",\n  \"unitPrice\": 12990,\n  \"category\": \"Categoria\"\n}"
+            },
+            "url": "{{baseUrl}}/api/products"
+          }
+        },
+        {
+          "name": "Actualizar producto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SLX-999\",\n  \"name\": \"Producto test actualizado\",\n  \"description\": \"Nueva descripcion\",\n  \"unitPrice\": 13990,\n  \"category\": \"Categoria\",\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Eliminar producto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/products/{{productId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "Listar inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inventory"
+          }
+        },
+        {
+          "name": "Buscar inventario por producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inventory/{{productId}}"
+          }
+        },
+        {
+          "name": "Consultar stock por producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inventory/{{productId}}/stock"
+          }
+        },
+        {
+          "name": "Crear o actualizar inventario por producto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stockAvailable\": 20,\n  \"stockReserved\": 5,\n  \"warehouseLocation\": \"Santiago\",\n  \"reorderPoint\": 3\n}"
+            },
+            "url": "{{baseUrl}}/api/inventory/{{productId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swagger UI",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/swagger-ui.html"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "productId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "sku",
+      "value": "SLX-999"
+    }
+  ]
+}
