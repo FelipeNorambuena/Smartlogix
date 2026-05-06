@@ -14,10 +14,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /*
+     * Manejador global de errores.
+     * Evita repetir try/catch en controllers y asegura una respuesta JSON
+     * consistente para todos los errores conocidos.
+     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(
             ResourceNotFoundException exception,
             HttpServletRequest request) {
+        // Recurso no encontrado: producto o inventario inexistente.
         return build(HttpStatus.NOT_FOUND, exception.getMessage(), request, Map.of());
     }
 
@@ -25,6 +31,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleBusinessRule(
             BusinessRuleException exception,
             HttpServletRequest request) {
+        // Regla de negocio invalida: SKU duplicado, stock inconsistente, etc.
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request, Map.of());
     }
 
@@ -32,6 +39,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,
             HttpServletRequest request) {
+        // Errores generados por anotaciones como @NotBlank, @NotNull o @Min.
         Map<String, String> details = new LinkedHashMap<>();
         for (FieldError fieldError : exception.getBindingResult().getFieldErrors()) {
             details.put(fieldError.getField(), fieldError.getDefaultMessage());
@@ -44,6 +52,7 @@ public class GlobalExceptionHandler {
             String message,
             HttpServletRequest request,
             Map<String, String> details) {
+        // Construye el contrato JSON comun usado por todos los handlers.
         ApiErrorResponse response = new ApiErrorResponse(
                 OffsetDateTime.now(),
                 status.value(),

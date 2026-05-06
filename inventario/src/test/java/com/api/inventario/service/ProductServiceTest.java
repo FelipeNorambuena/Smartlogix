@@ -20,6 +20,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/*
+ * Pruebas unitarias de ProductService.
+ * Se mockea ProductRepository para validar reglas de negocio sin acceder a la BD.
+ */
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
@@ -31,6 +35,7 @@ class ProductServiceTest {
 
     @Test
     void createStoresValidProduct() {
+        // Verifica normalizacion del SKU y mapeo del request hacia la entidad.
         ProductCreateRequest request = new ProductCreateRequest(
                 " slx-999 ",
                 "Producto test",
@@ -52,6 +57,7 @@ class ProductServiceTest {
 
     @Test
     void createRejectsDuplicatedSku() {
+        // Verifica que no se permitan dos productos con el mismo SKU.
         ProductCreateRequest request = new ProductCreateRequest(
                 "SLX-001",
                 "Producto test",
@@ -67,6 +73,7 @@ class ProductServiceTest {
 
     @Test
     void softDeleteMarksProductInactive() {
+        // Verifica baja logica: el producto queda inactivo, no eliminado fisicamente.
         UUID productId = UUID.randomUUID();
         Product product = new Product();
         product.setId(productId);
