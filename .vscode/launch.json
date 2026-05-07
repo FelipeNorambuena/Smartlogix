@@ -40,6 +40,17 @@
             "mainClass": "com.smartlogix.auth.AuthServiceApplication",
             "projectName": "auth-service",
             "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=64289 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=auth-service"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ApiGatewayApplication<api-gateway>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.smartlogix.api_gateway.ApiGatewayApplication",
+            "projectName": "api-gateway",
+            "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
     ]

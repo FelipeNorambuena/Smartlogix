@@ -40,3 +40,69 @@ spring.datasource.password=
 ```
 
 Si aparece el error `Unknown database 'smartlogix_auth'`, significa que falta ejecutar `smartlogix_auth_mysql_laragon.sql` en Laragon/HeidiSQL.
+
+### Pruebas de auth con Postman
+
+La coleccion de Postman para probar `auth-service` esta en:
+
+```text
+postman/smartlogix-auth.postman_collection.json
+```
+
+Orden recomendado:
+
+1. Ejecutar `Health`.
+2. Ejecutar `Registrar cliente`.
+3. Ejecutar `Perfil actual`.
+4. Para probar `/users/**`, iniciar sesion con `Login ADMIN`.
+5. Ejecutar las solicitudes de `Users - ADMIN`.
+
+La coleccion guarda automaticamente el JWT en la variable `authToken` despues de registrar o hacer login.
+
+Para crear el primer ADMIN en ambiente local, levantar `auth-service` una vez con:
+
+```properties
+AUTH_BOOTSTRAP_ADMIN_ENABLED=true
+AUTH_BOOTSTRAP_ADMIN_EMAIL=admin@smartlogix.com
+AUTH_BOOTSTRAP_ADMIN_PASSWORD=Admin12345
+```
+
+Despues de crear el ADMIN, volver `AUTH_BOOTSTRAP_ADMIN_ENABLED` a `false` para evitar altas administrativas no deseadas.
+
+## API Gateway local
+
+El `api-gateway` centraliza el acceso externo y valida el JWT emitido por `auth-service`.
+
+Configuracion local:
+
+```properties
+server.port=8080
+AUTH_SERVICE_URL=http://localhost:8082
+JWT_SECRET=smartlogix-auth-dev-secret-change-me-1234567890
+JWT_ISSUER=smartlogix-auth
+```
+
+`JWT_SECRET` y `JWT_ISSUER` deben coincidir con los valores usados por `auth-service`.
+
+Rutas habilitadas inicialmente:
+
+```text
+POST /auth/register -> auth-service
+POST /auth/login    -> auth-service
+GET  /auth/me       -> auth-service, requiere JWT
+/users/**           -> auth-service, requiere rol ADMIN
+```
+
+Orden recomendado para probar:
+
+1. Levantar `auth-service` en `http://localhost:8082`.
+2. Levantar `api-gateway` en `http://localhost:8080`.
+3. Importar en Postman:
+
+```text
+postman/smartlogix-gateway.postman_collection.json
+```
+
+4. Ejecutar `Gateway Health`.
+5. Ejecutar `Auth por Gateway / Login ADMIN`.
+6. Ejecutar `Users por Gateway - ADMIN / Listar usuarios`.

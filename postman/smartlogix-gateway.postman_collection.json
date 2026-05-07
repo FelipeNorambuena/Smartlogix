@@ -1,0 +1,235 @@
+{
+  "info": {
+    "name": "SmartLogix - API Gateway",
+    "description": "Coleccion para probar auth-service a traves del API Gateway. Usar cuando api-gateway esta levantado en http://localhost:8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Gateway Health",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": "{{gatewayUrl}}/actuator/health"
+      }
+    },
+    {
+      "name": "Auth por Gateway",
+      "item": [
+        {
+          "name": "Registrar cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('authToken', response.token);",
+                  "  pm.collectionVariables.set('currentUserId', response.user.id);",
+                  "  pm.collectionVariables.set('clientEmail', response.user.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente.gateway{{$timestamp}}@smartlogix.com\",\n  \"password\": \"Cliente12345\",\n  \"firstName\": \"Cliente\",\n  \"lastName\": \"Gateway\"\n}"
+            },
+            "url": "{{gatewayUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('authToken', response.token);",
+                  "  pm.collectionVariables.set('currentUserId', response.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clientEmail}}\",\n  \"password\": \"{{clientPassword}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('authToken', response.token);",
+                  "  pm.collectionVariables.set('currentUserId', response.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Perfil actual",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users por Gateway - ADMIN",
+      "item": [
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/users"
+          }
+        },
+        {
+          "name": "Crear usuario operador inventario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('targetUserId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operador.gateway{{$timestamp}}@smartlogix.com\",\n  \"password\": \"Operador12345\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Gateway\",\n  \"roles\": [\"OPERADOR_INVENTARIO\"],\n  \"enabled\": true\n}"
+            },
+            "url": "{{gatewayUrl}}/users"
+          }
+        },
+        {
+          "name": "Buscar usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/users/{{targetUserId}}"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "authToken",
+      "value": ""
+    },
+    {
+      "key": "currentUserId",
+      "value": ""
+    },
+    {
+      "key": "targetUserId",
+      "value": ""
+    },
+    {
+      "key": "clientEmail",
+      "value": "cliente@smartlogix.com"
+    },
+    {
+      "key": "clientPassword",
+      "value": "Cliente12345"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@smartlogix.com"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin12345"
+    }
+  ]
+}
