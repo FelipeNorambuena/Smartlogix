@@ -196,6 +196,134 @@
           }
         }
       ]
+    },
+    {
+      "name": "Inventario por Gateway - ADMIN u OPERADOR_INVENTARIO",
+      "item": [
+        {
+          "name": "Listar productos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/products?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Buscar producto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Buscar producto por SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/products/sku/{{sku}}"
+          }
+        },
+        {
+          "name": "Crear producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('productId', response.id);",
+                  "  pm.collectionVariables.set('sku', response.sku);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SLX-GW-{{$timestamp}}\",\n  \"name\": \"Producto Gateway\",\n  \"description\": \"Producto creado desde API Gateway\",\n  \"unitPrice\": 12990,\n  \"category\": \"Gateway\"\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/products"
+          }
+        },
+        {
+          "name": "Actualizar producto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{sku}}\",\n  \"name\": \"Producto Gateway actualizado\",\n  \"description\": \"Producto actualizado desde API Gateway\",\n  \"unitPrice\": 13990,\n  \"category\": \"Gateway\",\n  \"active\": true\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Listar inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Crear o actualizar inventario por producto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stockAvailable\": 20,\n  \"stockReserved\": 5,\n  \"warehouseLocation\": \"Santiago\",\n  \"reorderPoint\": 3\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/{{productId}}"
+          }
+        },
+        {
+          "name": "Consultar disponibilidad por cantidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/{{productId}}/availability?quantity={{quantity}}"
+          }
+        },
+        {
+          "name": "Reservar stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/{{productId}}/reserve"
+          }
+        }
+      ]
     }
   ],
   "variable": [
@@ -230,6 +358,26 @@
     {
       "key": "adminPassword",
       "value": "Admin12345"
+    },
+    {
+      "key": "productId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "sku",
+      "value": "SLX-GW"
+    },
+    {
+      "key": "quantity",
+      "value": "4"
+    },
+    {
+      "key": "page",
+      "value": "0"
+    },
+    {
+      "key": "size",
+      "value": "20"
     }
   ]
 }

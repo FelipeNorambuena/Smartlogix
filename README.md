@@ -80,6 +80,7 @@ server.port=8080
 AUTH_SERVICE_URL=http://localhost:8082
 JWT_SECRET=smartlogix-auth-dev-secret-change-me-1234567890
 JWT_ISSUER=smartlogix-auth
+INVENTARIO_API_KEY=local-dev-inventory-key
 ```
 
 `JWT_SECRET` y `JWT_ISSUER` deben coincidir con los valores usados por `auth-service`.
@@ -91,6 +92,8 @@ POST /auth/register -> auth-service
 POST /auth/login    -> auth-service
 GET  /auth/me       -> auth-service, requiere JWT
 /users/**           -> auth-service, requiere rol ADMIN
+/inventory/products -> inventario /api/products, requiere ADMIN u OPERADOR_INVENTARIO
+/inventory/**       -> inventario /api/inventory, requiere ADMIN u OPERADOR_INVENTARIO
 ```
 
 Orden recomendado para probar:
@@ -106,3 +109,17 @@ postman/smartlogix-gateway.postman_collection.json
 4. Ejecutar `Gateway Health`.
 5. Ejecutar `Auth por Gateway / Login ADMIN`.
 6. Ejecutar `Users por Gateway - ADMIN / Listar usuarios`.
+7. Levantar `inventario` en `http://localhost:8081`.
+8. Ejecutar `Inventario por Gateway - ADMIN u OPERADOR_INVENTARIO / Listar productos`.
+9. Ejecutar `Inventario por Gateway - ADMIN u OPERADOR_INVENTARIO / Crear producto`.
+
+Las rutas externas del Gateway no exponen el prefijo interno `/api` de inventario:
+
+```text
+GET  http://localhost:8080/inventory/products
+POST http://localhost:8080/inventory/products
+GET  http://localhost:8080/inventory
+PUT  http://localhost:8080/inventory/{productId}
+```
+
+En desarrollo local, `inventario` permite llamadas sin `X-API-Key` si `INVENTARIO_API_KEY` esta vacio. Si se activa esa clave interna, usar el mismo valor de `INVENTARIO_API_KEY` al levantar `inventario` y `api-gateway`, porque el Gateway la reenvia hacia inventario como `X-API-Key`.
