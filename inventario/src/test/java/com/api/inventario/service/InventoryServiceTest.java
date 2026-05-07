@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.api.inventario.dto.InventoryResponse;
 import com.api.inventario.dto.InventoryUpdateRequest;
+import com.api.inventario.dto.StockAvailabilityResponse;
 import com.api.inventario.dto.StockResponse;
 import com.api.inventario.exception.BusinessRuleException;
 import com.api.inventario.exception.ResourceNotFoundException;
@@ -116,6 +117,149 @@ class InventoryServiceTest {
         assertThatThrownBy(() -> inventoryService.findStockByProductId(productId))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Inventario no encontrado para producto " + productId);
+    }
+
+    @Test
+    void checkAvailabilityReturnsTrueWhenFreeStockCoversQuantity() {
+        // Permite validar disponibilidad sin modificar inventario.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 20, 5, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductId(productId)).thenReturn(Optional.of(inventory));
+
+        StockAvailabilityResponse response = inventoryService.checkAvailability(productId, 12);
+
+        assertThat(response.requestedQuantity()).isEqualTo(12);
+        assertThat(response.stockFree()).isEqualTo(15);
+        assertThat(response.productActive()).isTrue();
+        assertThat(response.available()).isTrue();
+    }
+
+    @Test
+    void reserveStockIncreasesReservedWhenFreeStockIsEnough() {
+        // Reserva unidades sin alterar el stock total disponible.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 20, 5, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+        when(inventoryRepository.save(any(Inventory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StockResponse response = inventoryService.reserveStock(productId, 4);
+
+        assertThat(response.stockAvailable()).isEqualTo(20);
+        assertThat(response.stockReserved()).isEqualTo(9);
+        assertThat(response.stockFree()).isEqualTo(11);
+    }
+
+    @Test
+    void reserveStockRejectsInsufficientFreeStock() {
+        // Evita sobre-reservar cuando el stock libre no alcanza.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 10, 8, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+
+        assertThatThrownBy(() -> inventoryService.reserveStock(productId, 3))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("Stock insuficiente");
+    }
+
+    @Test
+    void reserveStockRejectsInactiveProduct() {
+        // Un producto con baja logica no debe poder reservarse para nuevos pedidos.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        product.setActive(false);
+        Inventory inventory = inventory(product, 20, 5, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+
+        assertThatThrownBy(() -> inventoryService.reserveStock(productId, 1))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("producto inactivo");
+    }
+
+    @Test
+    void releaseReservedStockDecreasesOnlyReservedStock() {
+        // La liberacion revierte reservas sin sumar stock total.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 20, 8, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+        when(inventoryRepository.save(any(Inventory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StockResponse response = inventoryService.releaseReservedStock(productId, 3);
+
+        assertThat(response.stockAvailable()).isEqualTo(20);
+        assertThat(response.stockReserved()).isEqualTo(5);
+        assertThat(response.stockFree()).isEqualTo(15);
+    }
+
+    @Test
+    void releaseReservedStockRejectsQuantityGreaterThanReserved() {
+        // No se puede liberar una cantidad que nunca estuvo reservada.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 20, 2, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+
+        assertThatThrownBy(() -> inventoryService.releaseReservedStock(productId, 3))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("mas stock del que esta reservado");
+    }
+
+    @Test
+    void confirmReservedStockDecreasesAvailableAndReservedStock() {
+        // Confirmar una venta descuenta tanto el total como la reserva.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 20, 8, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+        when(inventoryRepository.save(any(Inventory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StockResponse response = inventoryService.confirmReservedStock(productId, 4);
+
+        assertThat(response.stockAvailable()).isEqualTo(16);
+        assertThat(response.stockReserved()).isEqualTo(4);
+        assertThat(response.stockFree()).isEqualTo(12);
+    }
+
+    @Test
+    void confirmReservedStockRejectsQuantityGreaterThanReserved() {
+        // Obliga a que el pedido haya reservado unidades antes de confirmar venta.
+        UUID productId = UUID.randomUUID();
+        Product product = product(productId);
+        Inventory inventory = inventory(product, 20, 2, 3);
+
+        when(productService.findEntityById(productId)).thenReturn(product);
+        when(inventoryRepository.findByProductIdForUpdate(productId)).thenReturn(Optional.of(inventory));
+
+        assertThatThrownBy(() -> inventoryService.confirmReservedStock(productId, 3))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("mas stock del que esta reservado");
+    }
+
+    @Test
+    void stockOperationsRejectInvalidQuantity() {
+        // Valida tambien a nivel service para llamadas internas, no solo HTTP.
+        UUID productId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> inventoryService.reserveStock(productId, 0))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("cantidad debe ser mayor que cero");
     }
 
     private Inventory inventory(Product product, int stockAvailable, int stockReserved, int reorderPoint) {

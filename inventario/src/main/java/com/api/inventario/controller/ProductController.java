@@ -1,12 +1,12 @@
 package com.api.inventario.controller;
 
 import com.api.inventario.dto.ProductCreateRequest;
+import com.api.inventario.dto.PageResponse;
 import com.api.inventario.dto.ProductResponse;
 import com.api.inventario.dto.ProductUpdateRequest;
 import com.api.inventario.service.ProductService;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,9 +35,14 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponse> findAll() {
-        // Retorna solo productos activos; el soft delete no elimina filas fisicas.
-        return productService.findAllActive();
+    public PageResponse<ProductResponse> findAll(
+            @RequestParam(required = false) String sku,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // Retorna productos activos con filtros y paginacion.
+        return productService.searchActive(sku, name, category, page, size);
     }
 
     @GetMapping("/{id}")

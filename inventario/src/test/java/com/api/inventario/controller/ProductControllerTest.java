@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.api.inventario.dto.PageResponse;
 import com.api.inventario.dto.ProductCreateRequest;
 import com.api.inventario.dto.ProductResponse;
 import com.api.inventario.dto.ProductUpdateRequest;
@@ -45,15 +46,36 @@ class ProductControllerTest {
 
     @Test
     void findAllReturnsActiveProducts() throws Exception {
-        // Verifica que GET /api/products responda una lista JSON de productos.
+        // Verifica que GET /api/products responda una pagina JSON de productos.
         UUID productId = UUID.randomUUID();
         ProductResponse response = productResponse(productId, "SLX-001", "Producto test");
-        when(productService.findAllActive()).thenReturn(List.of(response));
+        when(productService.searchActive(null, null, null, 0, 20))
+                .thenReturn(pageResponse(List.of(response)));
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(productId.toString()))
-                .andExpect(jsonPath("$[0].sku").value("SLX-001"));
+                .andExpect(jsonPath("$.content[0].id").value(productId.toString()))
+                .andExpect(jsonPath("$.content[0].sku").value("SLX-001"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20));
+    }
+
+    @Test
+    void findAllPassesFiltersAndPagination() throws Exception {
+        // Verifica filtros de busqueda y paginacion del listado de productos.
+        ProductResponse response = productResponse(UUID.randomUUID(), "SLX-999", "Producto test");
+        when(productService.searchActive("SLX", "Producto", "Categoria", 1, 5))
+                .thenReturn(pageResponse(List.of(response)));
+
+        mockMvc.perform(get("/api/products")
+                        .param("sku", "SLX")
+                        .param("name", "Producto")
+                        .param("category", "Categoria")
+                        .param("page", "1")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].sku").value("SLX-999"))
+                .andExpect(jsonPath("$.page").value(0));
     }
 
     @Test
@@ -124,6 +146,32 @@ class ProductControllerTest {
     }
 
     @Test
+    void getProductRejectsInvalidUuid() throws Exception {
+        // Verifica que UUID invalido mantenga el formato JSON comun de errores.
+        mockMvc.perform(get("/api/products/{id}", "no-es-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Parametro invalido"))
+                .andExpect(jsonPath("$.details.id").exists());
+    }
+
+    @Test
+    void createProductRejectsMalformedJson() throws Exception {
+        // Verifica que JSON mal formado no exponga errores internos.
+        String payload = """
+                {
+                  "sku": "SLX-999",
+                  "name": "Producto test",
+                }
+                """;
+
+        mockMvc.perform(post("/api/products")
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("JSON de solicitud invalido o mal formado"));
+    }
+
+    @Test
     void updateProductReturnsUpdatedValues() throws Exception {
         // Verifica que PUT /api/products/{id} responda los valores actualizados.
         UUID productId = UUID.randomUUID();
@@ -168,5 +216,17 @@ class ProductControllerTest {
                 true,
                 null,
                 null);
+    }
+
+    private PageResponse<ProductResponse> pageResponse(List<ProductResponse> products) {
+        // Helper para simular respuestas paginadas del service.
+        return new PageResponse<>(
+                products,
+                0,
+                20,
+                products.size(),
+                1,
+                true,
+                true);
     }
 }
