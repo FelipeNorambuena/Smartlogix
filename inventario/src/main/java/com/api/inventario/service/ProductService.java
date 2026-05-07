@@ -1,6 +1,7 @@
 package com.api.inventario.service;
 
 import com.api.inventario.dto.ProductCreateRequest;
+import com.api.inventario.dto.PageResponse;
 import com.api.inventario.dto.ProductResponse;
 import com.api.inventario.dto.ProductUpdateRequest;
 import com.api.inventario.exception.BusinessRuleException;
@@ -9,6 +10,8 @@ import com.api.inventario.model.Product;
 import com.api.inventario.repository.ProductRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +36,26 @@ public class ProductService {
         return productRepository.findByActiveTrue().stream()
                 .map(ProductResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ProductResponse> searchActive(
+            String sku,
+            String name,
+            String category,
+            int page,
+            int size) {
+        // Listado publico paginado con filtros simples para busqueda operativa.
+        PageRequest pageRequest = PageRequest.of(
+                validatePage(page),
+                validateSize(size),
+                Sort.by("sku").ascending());
+        return PageResponse.from(productRepository.searchActive(
+                        trimToNull(sku),
+                        trimToNull(name),
+                        trimToNull(category),
+                        pageRequest)
+                .map(ProductResponse::from));
     }
 
     @Transactional(readOnly = true)
@@ -113,5 +136,19 @@ public class ProductService {
             return null;
         }
         return value.trim();
+    }
+
+    private int validatePage(int page) {
+        if (page < 0) {
+            throw new BusinessRuleException("La pagina no puede ser negativa");
+        }
+        return page;
+    }
+
+    private int validateSize(int size) {
+        if (size < 1 || size > 100) {
+            throw new BusinessRuleException("El tamano de pagina debe estar entre 1 y 100");
+        }
+        return size;
     }
 }

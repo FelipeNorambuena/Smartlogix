@@ -3,6 +3,26 @@
     "name": "SmartLogix - Inventario",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
     {
       "name": "Products",
@@ -12,7 +32,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/api/products"
+            "url": "{{baseUrl}}/api/products?page={{page}}&size={{size}}"
           }
         },
         {
@@ -83,7 +103,15 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/api/inventory"
+            "url": "{{baseUrl}}/api/inventory?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Filtrar inventario bajo stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inventory?lowStock={{lowStock}}&warehouseLocation={{warehouseLocation}}&page={{page}}&size={{size}}"
           }
         },
         {
@@ -103,6 +131,14 @@
           }
         },
         {
+          "name": "Consultar disponibilidad por cantidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inventory/{{productId}}/availability?quantity={{quantity}}"
+          }
+        },
+        {
           "name": "Crear o actualizar inventario por producto",
           "request": {
             "method": "PUT",
@@ -117,6 +153,57 @@
               "raw": "{\n  \"stockAvailable\": 20,\n  \"stockReserved\": 5,\n  \"warehouseLocation\": \"Santiago\",\n  \"reorderPoint\": 3\n}"
             },
             "url": "{{baseUrl}}/api/inventory/{{productId}}"
+          }
+        },
+        {
+          "name": "Reservar stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{baseUrl}}/api/inventory/{{productId}}/reserve"
+          }
+        },
+        {
+          "name": "Liberar stock reservado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{baseUrl}}/api/inventory/{{productId}}/release"
+          }
+        },
+        {
+          "name": "Confirmar stock reservado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{baseUrl}}/api/inventory/{{productId}}/confirm"
           }
         }
       ]
@@ -142,6 +229,30 @@
     {
       "key": "sku",
       "value": "SLX-999"
+    },
+    {
+      "key": "quantity",
+      "value": "4"
+    },
+    {
+      "key": "page",
+      "value": "0"
+    },
+    {
+      "key": "size",
+      "value": "20"
+    },
+    {
+      "key": "warehouseLocation",
+      "value": "Santiago"
+    },
+    {
+      "key": "lowStock",
+      "value": "true"
+    },
+    {
+      "key": "apiKey",
+      "value": ""
     }
   ]
 }

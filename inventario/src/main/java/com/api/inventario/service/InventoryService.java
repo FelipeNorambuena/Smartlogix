@@ -2,6 +2,8 @@ package com.api.inventario.service;
 
 import com.api.inventario.dto.InventoryResponse;
 import com.api.inventario.dto.InventoryUpdateRequest;
+import com.api.inventario.dto.PageResponse;
+import com.api.inventario.dto.StockAvailabilityResponse;
 import com.api.inventario.dto.StockResponse;
 import com.api.inventario.exception.BusinessRuleException;
 import com.api.inventario.exception.ResourceNotFoundException;
@@ -10,6 +12,8 @@ import com.api.inventario.model.Product;
 import com.api.inventario.repository.InventoryRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +43,26 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
+    public PageResponse<InventoryResponse> search(
+            String sku,
+            String warehouseLocation,
+            Boolean lowStock,
+            int page,
+            int size) {
+        // Listado paginado para operacion: busqueda por SKU, bodega y bajo stock.
+        PageRequest pageRequest = PageRequest.of(
+                validatePage(page),
+                validateSize(size),
+                Sort.by("product.sku").ascending());
+        return PageResponse.from(inventoryRepository.search(
+                        trimToNull(sku),
+                        trimToNull(warehouseLocation),
+                        lowStock,
+                        pageRequest)
+                .map(InventoryResponse::from));
+    }
+
+    @Transactional(readOnly = true)
     public InventoryResponse findByProductId(UUID productId) {
         // La API consulta inventario por producto, no por id interno de inventario.
         return InventoryResponse.from(findEntityByProductId(productId));
@@ -48,6 +72,14 @@ public class InventoryService {
     public StockResponse findStockByProductId(UUID productId) {
         // Vista enfocada en disponibilidad: stock total, reservado y libre.
         return StockResponse.from(findEntityByProductId(productId));
+    }
+
+    @Transactional(readOnly = true)
+    public StockAvailabilityResponse checkAvailability(UUID productId, Integer quantity) {
+        // Verifica si una venta podria reservar la cantidad solicitada.
+        int requestedQuantity = validateQuantity(quantity);
+        Inventory inventory = findEntityByProductId(productId);
+        return StockAvailabilityResponse.from(inventory, requestedQuantity);
     }
 
     public InventoryResponse updateByProductId(UUID productId, InventoryUpdateRequest request) {
@@ -72,10 +104,63 @@ public class InventoryService {
         return InventoryResponse.from(inventoryRepository.save(inventory));
     }
 
+    public StockResponse reserveStock(UUID productId, Integer quantity) {
+        // Reserva unidades para un pedido pendiente sin descontar el stock total.
+        int requestedQuantity = validateQuantity(quantity);
+        Inventory inventory = findEntityByProductIdForUpdate(productId);
+        validateProductIsActive(inventory);
+
+        int stockFree = calculateStockFree(inventory);
+        if (requestedQuantity > stockFree) {
+            throw new BusinessRuleException(
+                    "Stock insuficiente para reservar " + requestedQuantity + " unidades");
+        }
+
+        inventory.setStockReserved(inventory.getStockReserved() + requestedQuantity);
+        return StockResponse.from(inventoryRepository.save(inventory));
+    }
+
+    public StockResponse releaseReservedStock(UUID productId, Integer quantity) {
+        // Libera unidades reservadas cuando un pedido se cancela o expira.
+        int requestedQuantity = validateQuantity(quantity);
+        Inventory inventory = findEntityByProductIdForUpdate(productId);
+
+        if (requestedQuantity > inventory.getStockReserved()) {
+            throw new BusinessRuleException(
+                    "No se puede liberar mas stock del que esta reservado");
+        }
+
+        inventory.setStockReserved(inventory.getStockReserved() - requestedQuantity);
+        return StockResponse.from(inventoryRepository.save(inventory));
+    }
+
+    public StockResponse confirmReservedStock(UUID productId, Integer quantity) {
+        // Confirma una venta: descuenta del stock total y de las unidades reservadas.
+        int requestedQuantity = validateQuantity(quantity);
+        Inventory inventory = findEntityByProductIdForUpdate(productId);
+
+        if (requestedQuantity > inventory.getStockReserved()) {
+            throw new BusinessRuleException(
+                    "No se puede confirmar mas stock del que esta reservado");
+        }
+
+        inventory.setStockReserved(inventory.getStockReserved() - requestedQuantity);
+        inventory.setStockAvailable(inventory.getStockAvailable() - requestedQuantity);
+        return StockResponse.from(inventoryRepository.save(inventory));
+    }
+
     private Inventory findEntityByProductId(UUID productId) {
         // Distingue entre producto inexistente e inventario inexistente.
         productService.findEntityById(productId);
         return inventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Inventario no encontrado para producto " + productId));
+    }
+
+    private Inventory findEntityByProductIdForUpdate(UUID productId) {
+        // Primero valida producto para mantener mensajes 404 diferenciados.
+        productService.findEntityById(productId);
+        return inventoryRepository.findByProductIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Inventario no encontrado para producto " + productId));
     }
@@ -94,6 +179,37 @@ public class InventoryService {
         // El stock reservado representa unidades comprometidas dentro del disponible.
         if (stockReserved > stockAvailable) {
             throw new BusinessRuleException("El stock reservado no puede superar el stock disponible");
+        }
+    }
+
+    private int validateQuantity(Integer quantity) {
+        if (quantity == null || quantity < 1) {
+            throw new BusinessRuleException("La cantidad debe ser mayor que cero");
+        }
+        return quantity;
+    }
+
+    private int validatePage(int page) {
+        if (page < 0) {
+            throw new BusinessRuleException("La pagina no puede ser negativa");
+        }
+        return page;
+    }
+
+    private int validateSize(int size) {
+        if (size < 1 || size > 100) {
+            throw new BusinessRuleException("El tamano de pagina debe estar entre 1 y 100");
+        }
+        return size;
+    }
+
+    private int calculateStockFree(Inventory inventory) {
+        return inventory.getStockAvailable() - inventory.getStockReserved();
+    }
+
+    private void validateProductIsActive(Inventory inventory) {
+        if (!inventory.getProduct().isActive()) {
+            throw new BusinessRuleException("No se puede reservar stock de un producto inactivo");
         }
     }
 
