@@ -2,6 +2,18 @@
     "configurations": [
         {
             "type": "java",
+            "name": "AuthServiceApplication",
+            "request": "launch",
+            "mainClass": "com.smartlogix.auth_service.AuthServiceApplication"
+        },
+        {
+            "type": "java",
+            "name": "AuthServiceApplication",
+            "request": "launch",
+            "mainClass": "com.smartlogix.auth.AuthServiceApplication"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-EnviosApplication<envios>",
             "request": "launch",
             "cwd": "${workspaceFolder}",
@@ -17,6 +29,16 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.api.inventario.InventarioApplication",
             "projectName": "inventario",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-AuthServiceApplication<auth-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.smartlogix.auth.AuthServiceApplication",
+            "projectName": "auth-service",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
