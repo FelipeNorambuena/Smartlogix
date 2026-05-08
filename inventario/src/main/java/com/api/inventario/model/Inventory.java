@@ -12,10 +12,14 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "inventory")
+@Getter
+@Setter
 public class Inventory {
 
     /*
