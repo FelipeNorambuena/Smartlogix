@@ -1,0 +1,16 @@
+package com.smartlogix.auth.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+/*
+ * Registro publico de clientes.
+ * Todo registro publico recibe el rol CLIENTE por defecto.
+ */
+public record RegisterRequest(
+        @NotBlank @Email String email,
+        @NotBlank @Size(min = 8) String password,
+        @Size(max = 100) String firstName,
+        @Size(max = 100) String lastName) {
+}
