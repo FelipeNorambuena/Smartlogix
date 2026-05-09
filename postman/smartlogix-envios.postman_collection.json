@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "SmartLogix - Envios",
+    "description": "Coleccion para probar directamente el microservicio envios en http://localhost:8083.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Shipments",
+      "item": [
+        {
+          "name": "Listar envios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Filtrar envios por estado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments?status={{status}}&page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Filtrar envios por transportista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments?carrier={{carrier}}&page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Buscar envio por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "Buscar envio por pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments/order/{{orderId}}"
+          }
+        },
+        {
+          "name": "Buscar envio por tracking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments/tracking/{{trackingNumber}}"
+          }
+        },
+        {
+          "name": "Crear envio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('shipmentId', response.id);",
+                  "  pm.collectionVariables.set('orderId', response.orderId);",
+                  "  pm.collectionVariables.set('trackingNumber', response.trackingNumber);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{$guid}}\",\n  \"shippingAddress\": \"Av. Providencia 1234, Santiago\",\n  \"carrier\": \"Chilexpress\",\n  \"trackingNumber\": \"TRK-{{$timestamp}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments"
+          }
+        },
+        {
+          "name": "Actualizar envio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddress\": \"Av. Apoquindo 4501, Las Condes\",\n  \"carrier\": \"Blue Express\",\n  \"trackingNumber\": \"{{trackingNumber}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "Marcar listo para despacho",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ready_to_ship\",\n  \"location\": \"Bodega Santiago\",\n  \"description\": \"Pedido preparado para despacho\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}/status"
+          }
+        },
+        {
+          "name": "Marcar en transito",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_transit\",\n  \"location\": \"Centro de distribucion\",\n  \"description\": \"Envio retirado por transportista\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}/status"
+          }
+        },
+        {
+          "name": "Marcar entregado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"delivered\",\n  \"location\": \"Direccion de entrega\",\n  \"description\": \"Pedido entregado al cliente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}/status"
+          }
+        },
+        {
+          "name": "Listar eventos del envio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}/events"
+          }
+        },
+        {
+          "name": "Cancelar envio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/shipments/{{shipmentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swagger UI",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/swagger-ui.html"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "shipmentId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "orderId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "trackingNumber",
+      "value": "TRK-TEST"
+    },
+    {
+      "key": "status",
+      "value": "pending"
+    },
+    {
+      "key": "carrier",
+      "value": "Chilexpress"
+    },
+    {
+      "key": "page",
+      "value": "0"
+    },
+    {
+      "key": "size",
+      "value": "20"
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    }
+  ]
+}
