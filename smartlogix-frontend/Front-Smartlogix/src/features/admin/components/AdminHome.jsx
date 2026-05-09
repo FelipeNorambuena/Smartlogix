@@ -45,7 +45,7 @@ function AdminHome({ session }) {
           <h2>Inicio</h2>
         </div>
         <button className="admin-home-button" disabled={isLoading} onClick={loadAnalytics} type="button">
-          {isLoading ? 'Actualizando...' : 'Actualizar anal&iacute;tica'}
+          {isLoading ? 'Actualizando...' : 'Actualizar analítica'}
         </button>
       </div>
 
