@@ -41,7 +41,7 @@ function AdminHome({ session }) {
     <section className="admin-home" aria-label="Inicio administrativo">
       <div className="admin-home-header">
         <div>
-          <p className="admin-home-kicker">Anal&iacute;tica operativa</p>
+          <p className="admin-home-kicker">Analítica operativa</p>
           <h2>Inicio</h2>
         </div>
         <button className="admin-home-button" disabled={isLoading} onClick={loadAnalytics} type="button">
