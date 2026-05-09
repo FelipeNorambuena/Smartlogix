@@ -94,6 +94,7 @@ GET  /auth/me       -> auth-service, requiere JWT
 /users/**           -> auth-service, requiere rol ADMIN
 /inventory/products -> inventario /api/products, requiere ADMIN u OPERADOR_INVENTARIO
 /inventory/**       -> inventario /api/inventory, requiere ADMIN u OPERADOR_INVENTARIO
+/shipping/**        -> envios /api/shipments, requiere ADMIN u OPERADOR_ENVIOS
 ```
 
 Orden recomendado para probar:
@@ -112,6 +113,8 @@ postman/smartlogix-gateway.postman_collection.json
 7. Levantar `inventario` en `http://localhost:8081`.
 8. Ejecutar `Inventario por Gateway - ADMIN u OPERADOR_INVENTARIO / Listar productos`.
 9. Ejecutar `Inventario por Gateway - ADMIN u OPERADOR_INVENTARIO / Crear producto`.
+10. Levantar `envios` en `http://localhost:8083`.
+11. Probar envios desde `http://localhost:8080/shipping`.
 
 Las rutas externas del Gateway no exponen el prefijo interno `/api` de inventario:
 
@@ -120,6 +123,9 @@ GET  http://localhost:8080/inventory/products
 POST http://localhost:8080/inventory/products
 GET  http://localhost:8080/inventory
 PUT  http://localhost:8080/inventory/{productId}
+GET  http://localhost:8080/shipping
+POST http://localhost:8080/shipping
+PATCH http://localhost:8080/shipping/{shipmentId}/status
 ```
 
 En desarrollo local, `inventario` permite llamadas sin `X-API-Key` si `INVENTARIO_API_KEY` esta vacio. Si se activa esa clave interna, usar el mismo valor de `INVENTARIO_API_KEY` al levantar `inventario` y `api-gateway`, porque el Gateway la reenvia hacia inventario como `X-API-Key`.

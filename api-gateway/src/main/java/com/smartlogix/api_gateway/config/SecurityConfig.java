@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/inventory", "/inventory/**").hasAnyRole("ADMIN", "OPERADOR_INVENTARIO")
                         .requestMatchers("/orders/**").hasAnyRole("ADMIN", "OPERADOR_PEDIDOS", "CLIENTE")
-                        .requestMatchers("/shipping/**").hasAnyRole("ADMIN", "OPERADOR_ENVIOS")
+                        .requestMatchers("/shipping", "/shipping/**").hasAnyRole("ADMIN", "OPERADOR_ENVIOS")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
