@@ -1,3 +1,7 @@
+/*
+ * Constantes propias del modulo auth.
+ * Mantenerlas aqui evita duplicar valores entre componentes y hooks.
+ */
 export const AUTH_STORAGE_KEY = 'smartlogix.auth'
 
 export const INITIAL_LOGIN_FORM = {

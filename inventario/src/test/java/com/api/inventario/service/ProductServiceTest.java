@@ -8,9 +8,11 @@ import static org.mockito.Mockito.when;
 
 import com.api.inventario.dto.ProductCreateRequest;
 import com.api.inventario.exception.BusinessRuleException;
+import com.api.inventario.factory.SkuFactory;
 import com.api.inventario.model.Product;
 import com.api.inventario.repository.ProductRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,9 @@ class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private SkuFactory skuFactory;
 
     @InjectMocks
     private ProductService productService;
@@ -69,6 +74,27 @@ class ProductServiceTest {
         assertThatThrownBy(() -> productService.create(request))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("Ya existe un producto con SKU SLX-001");
+    }
+
+    @Test
+    void createGeneratesSkuWhenRequestDoesNotProvideOne() {
+        // Verifica que el alta pueda delegar el SKU automatico en la factory.
+        ProductCreateRequest request = new ProductCreateRequest(
+                null,
+                "Producto test",
+                null,
+                BigDecimal.TEN,
+                null);
+        when(productRepository.findSkusByPrefix("SKU-")).thenReturn(List.of("SKU-000001"));
+        when(skuFactory.nextSku("SKU-", List.of("SKU-000001"))).thenReturn("SKU-000002");
+        when(productRepository.existsBySku("SKU-000002")).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        productService.create(request);
+
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+        assertThat(productCaptor.getValue().getSku()).isEqualTo("SKU-000002");
     }
 
     @Test

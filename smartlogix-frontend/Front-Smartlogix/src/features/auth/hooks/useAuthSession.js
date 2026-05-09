@@ -7,6 +7,10 @@ import {
   persistSession,
 } from '../utils/authSessionStorage'
 
+/*
+ * Hook central del modulo auth.
+ * Agrupa estado del formulario, login, logout y datos derivados de usuario.
+ */
 export function useAuthSession() {
   const [loginForm, setLoginForm] = useState(INITIAL_LOGIN_FORM)
   const [session, setSession] = useState(loadStoredSession)
@@ -14,6 +18,7 @@ export function useAuthSession() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
+  // Nombre visible: privilegia nombre/apellido y usa el email como respaldo.
   const userDisplayName = useMemo(() => {
     if (!session?.user) {
       return ''
@@ -26,6 +31,7 @@ export function useAuthSession() {
     return fullName || session.user.email
   }, [session])
 
+  // Iniciales usadas como avatar cuando no existe imagen de perfil.
   const userInitials = useMemo(() => {
     if (!userDisplayName) {
       return 'SL'
@@ -52,6 +58,7 @@ export function useAuthSession() {
   async function handleLoginSubmit(event) {
     event.preventDefault()
 
+    // Se valida en cliente antes de llamar al API Gateway.
     const validationMessage = validateLoginForm(loginForm)
     if (validationMessage) {
       setErrorMessage(validationMessage)
@@ -62,6 +69,7 @@ export function useAuthSession() {
     setErrorMessage('')
 
     try {
+      // El servicio HTTP mantiene el contrato con auth-service aislado de la UI.
       const authData = await loginUser({
         email: loginForm.email.trim(),
         password: loginForm.password,
@@ -69,6 +77,7 @@ export function useAuthSession() {
 
       const nextSession = persistSession(authData, loginForm.rememberSession)
       setSession(nextSession)
+      // Se limpia password despues de un login correcto.
       setLoginForm({
         ...INITIAL_LOGIN_FORM,
         rememberSession: loginForm.rememberSession,
@@ -106,6 +115,7 @@ export function useAuthSession() {
 }
 
 function validateLoginForm(loginForm) {
+  // Validacion minima de UX; las reglas definitivas siguen en el backend.
   if (!loginForm.email.trim()) {
     return 'Ingresa el correo del usuario.'
   }

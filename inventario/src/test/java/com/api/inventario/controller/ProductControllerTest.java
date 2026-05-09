@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.api.inventario.dto.PageResponse;
 import com.api.inventario.dto.ProductCreateRequest;
 import com.api.inventario.dto.ProductResponse;
+import com.api.inventario.dto.ProductSkuResponse;
 import com.api.inventario.dto.ProductUpdateRequest;
 import com.api.inventario.exception.ResourceNotFoundException;
 import com.api.inventario.service.ProductService;
@@ -104,6 +105,16 @@ class ProductControllerTest {
     }
 
     @Test
+    void getNextSkuReturnsSuggestedSku() throws Exception {
+        // Verifica el endpoint usado por el frontend para mostrar el proximo SKU.
+        when(productService.getNextSku()).thenReturn(new ProductSkuResponse("SKU-000001"));
+
+        mockMvc.perform(get("/api/products/next-sku"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sku").value("SKU-000001"));
+    }
+
+    @Test
     void createProductReturnsCreated() throws Exception {
         // Verifica que el alta de producto responda 201 Created y devuelva el body.
         UUID productId = UUID.randomUUID();
@@ -140,7 +151,6 @@ class ProductControllerTest {
                         .content(payload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("La solicitud contiene datos invalidos"))
-                .andExpect(jsonPath("$.details.sku").exists())
                 .andExpect(jsonPath("$.details.name").exists())
                 .andExpect(jsonPath("$.details.unitPrice").exists());
     }

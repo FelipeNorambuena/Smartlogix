@@ -1,5 +1,9 @@
 import '../styles/session-card.css'
 
+/*
+ * Resumen de la sesion autenticada.
+ * No muestra el JWT completo para evitar exponer informacion sensible en pantalla.
+ */
 function SessionCard({
   onLogout,
   roles,

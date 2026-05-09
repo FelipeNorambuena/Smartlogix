@@ -10,8 +10,8 @@ import java.math.BigDecimal;
  * Las anotaciones de validacion se ejecutan antes de entrar al service.
  */
 public record ProductCreateRequest(
-        // SKU requerido: identifica el producto y debe ser unico en la BD.
-        @NotBlank String sku,
+        // SKU opcional: si viene vacio, ProductService genera SKU-000001, etc.
+        String sku,
         // Nombre requerido para que el producto pueda mostrarse correctamente.
         @NotBlank String name,
         // Texto opcional; el service lo normaliza a null si viene vacio.

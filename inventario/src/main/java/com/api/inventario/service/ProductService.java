@@ -3,8 +3,10 @@ package com.api.inventario.service;
 import com.api.inventario.dto.ProductCreateRequest;
 import com.api.inventario.dto.PageResponse;
 import com.api.inventario.dto.ProductResponse;
+import com.api.inventario.dto.ProductSkuResponse;
 import com.api.inventario.dto.ProductUpdateRequest;
 import com.api.inventario.exception.BusinessRuleException;
+import com.api.inventario.factory.SkuFactory;
 import com.api.inventario.exception.ResourceNotFoundException;
 import com.api.inventario.model.Product;
 import com.api.inventario.repository.ProductRepository;
@@ -24,10 +26,14 @@ public class ProductService {
      * Centraliza reglas de negocio: normalizacion de SKU, validacion de
      * duplicados, busquedas y baja logica.
      */
-    private final ProductRepository productRepository;
+    private static final String AUTO_SKU_PREFIX = "SKU-";
 
-    public ProductService(ProductRepository productRepository) {
+    private final ProductRepository productRepository;
+    private final SkuFactory skuFactory;
+
+    public ProductService(ProductRepository productRepository, SkuFactory skuFactory) {
         this.productRepository = productRepository;
+        this.skuFactory = skuFactory;
     }
 
     @Transactional(readOnly = true)
@@ -72,9 +78,17 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado para SKU " + normalizedSku)));
     }
 
+    @Transactional(readOnly = true)
+    public ProductSkuResponse getNextSku() {
+        // Expone al frontend el proximo codigo sugerido sin crear el producto.
+        return new ProductSkuResponse(generateNextSku());
+    }
+
     public ProductResponse create(ProductCreateRequest request) {
-        // El SKU es unico: no se permite crear dos productos con el mismo codigo.
-        String sku = normalizeSku(request.sku());
+        // Si el frontend no envia SKU, el backend genera el siguiente codigo seguro.
+        String sku = shouldGenerateSku(request.sku())
+                ? generateNextSku()
+                : normalizeSku(request.sku());
         if (productRepository.existsBySku(sku)) {
             throw new BusinessRuleException("Ya existe un producto con SKU " + sku);
         }
@@ -89,6 +103,14 @@ public class ProductService {
         product.setActive(true);
 
         return ProductResponse.from(productRepository.save(product));
+    }
+
+    private String generateNextSku() {
+        return skuFactory.nextSku(AUTO_SKU_PREFIX, productRepository.findSkusByPrefix(AUTO_SKU_PREFIX));
+    }
+
+    private boolean shouldGenerateSku(String sku) {
+        return sku == null || sku.trim().isEmpty();
     }
 
     public ProductResponse update(UUID id, ProductUpdateRequest request) {
