@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="SmartLogix">
+  <rect width="64" height="64" rx="12" fill="#ffffff"/>
+  <path d="M32 54 12 42V20l20 11z" fill="#ff7a1f"/>
+  <path d="M32 54 52 42V20L32 31z" fill="#008aa0"/>
+  <path d="M12 20 33 8l19 12-20 11z" fill="#20aaa5"/>
+  <path d="M18 23 39 11l6 4-20 12z" fill="#ffffff"/>
+  <path d="M26 27 47 16l5 3-20 12z" fill="#ffffff"/>
+  <path d="M32 31v23" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+  <path d="M20 38 29 43" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+  <path d="M39 42 48 33" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+  <path d="M22 18 38 8" stroke="#20aaa5" stroke-width="3.8" stroke-linecap="round"/>
+  <path d="M31 23 48 13" stroke="#20aaa5" stroke-width="3.8" stroke-linecap="round"/>
+  <path d="M38 27 55 18" stroke="#20aaa5" stroke-width="3.8" stroke-linecap="round"/>
+  <circle cx="39" cy="7" r="3.6" fill="#ffffff" stroke="#20aaa5" stroke-width="3.2"/>
+  <circle cx="49" cy="12" r="3.6" fill="#ffffff" stroke="#20aaa5" stroke-width="3.2"/>
+  <circle cx="56" cy="17" r="3.6" fill="#ffffff" stroke="#20aaa5" stroke-width="3.2"/>
+</svg>
