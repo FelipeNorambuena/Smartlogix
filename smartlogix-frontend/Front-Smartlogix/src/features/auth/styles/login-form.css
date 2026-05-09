@@ -1,0 +1,91 @@
+.login-form {
+  display: grid;
+  gap: 18px;
+}
+
+.field-group {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.field-group label,
+.check-row {
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.field-group input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.field-group input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(22, 111, 111, 0.14);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 92px;
+}
+
+.text-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 78px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-weight: 800;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.error-message {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  border-radius: 6px;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .password-field input {
+    padding-right: 84px;
+  }
+
+  .text-button {
+    min-width: 72px;
+    font-size: 0.85rem;
+  }
+}
