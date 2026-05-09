@@ -1,5 +1,9 @@
 import '../styles/login-form.css'
 
+/*
+ * Formulario controlado de inicio de sesion.
+ * La logica se recibe desde useAuthSession para mantener la UI desacoplada.
+ */
 function LoginForm({
   errorMessage,
   isSubmitting,
@@ -16,6 +20,7 @@ function LoginForm({
       </div>
 
       <form className="login-form" onSubmit={onSubmit}>
+        {/* El backend espera email y password en el body de /auth/login. */}
         <div className="field-group">
           <label htmlFor="email">Correo electr&oacute;nico</label>
           <input
@@ -57,6 +62,7 @@ function LoginForm({
         </div>
 
         <label className="check-row">
+          {/* Permite elegir si el token queda en localStorage o sessionStorage. */}
           <input
             checked={loginForm.rememberSession}
             name="rememberSession"

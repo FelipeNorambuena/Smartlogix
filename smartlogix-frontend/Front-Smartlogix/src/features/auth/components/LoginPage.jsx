@@ -1,11 +1,21 @@
 import { useAuthSession } from '../hooks/useAuthSession'
 import '../styles/auth-page.css'
+import AdminDashboard from '../../admin/components/AdminDashboard'
 import BrandPanel from './BrandPanel'
 import LoginForm from './LoginForm'
 import SessionCard from './SessionCard'
 
+/*
+ * Contenedor principal del modulo de autenticacion.
+ * Decide si se muestra el formulario o la tarjeta de sesion activa.
+ */
 function LoginPage() {
   const authSession = useAuthSession()
+  const isAdmin = authSession.roles.includes('ADMIN')
+
+  if (authSession.session && isAdmin) {
+    return <AdminDashboard authSession={authSession} />
+  }
 
   return (
     <main className="login-page">
@@ -16,6 +26,7 @@ function LoginPage() {
           <h1 className="auth-page-title">Plataforma log&iacute;stica</h1>
 
           <div className="auth-card">
+            {/* La vista cambia segun exista una sesion guardada o recien autenticada. */}
             {authSession.session ? (
               <SessionCard
                 onLogout={authSession.handleLogout}

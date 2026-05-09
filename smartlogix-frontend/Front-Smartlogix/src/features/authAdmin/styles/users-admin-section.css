@@ -1,0 +1,232 @@
+.users-admin-section {
+  display: grid;
+  gap: 18px;
+}
+
+.users-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.users-kicker {
+  margin: 0 0 6px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.users-header h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.8rem;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.users-card {
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 48px rgba(16, 24, 40, 0.08);
+}
+
+.users-card-heading {
+  margin-bottom: 18px;
+}
+
+.users-card-heading h3 {
+  margin: 0 0 6px;
+  color: var(--color-text);
+  font-size: 1.18rem;
+}
+
+.users-card-heading p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.users-form,
+.users-form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.users-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.users-field {
+  display: grid;
+  gap: 7px;
+}
+
+.users-field span,
+.users-check-row {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.users-field input,
+.users-lookup input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+  outline: none;
+}
+
+.users-field input:focus,
+.users-lookup input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(22, 111, 111, 0.14);
+}
+
+.role-selector,
+.users-actions,
+.users-lookup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.users-lookup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 18px;
+}
+
+.role-pill {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted-strong);
+  background: var(--color-surface);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.role-pill-active {
+  border-color: var(--color-primary);
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+}
+
+.users-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.users-check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.users-primary-button,
+.users-ghost-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.users-primary-button {
+  width: 100%;
+  border: 1px solid var(--color-primary);
+  color: var(--color-white);
+  background: var(--color-primary);
+}
+
+.users-ghost-button {
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.users-error,
+.users-success {
+  margin: 0;
+  padding: 11px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.users-error {
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.users-success {
+  border: 1px solid rgba(33, 166, 122, 0.28);
+  color: #08704f;
+  background: #e9f8f2;
+}
+
+.users-table-wrap {
+  overflow-x: auto;
+}
+
+.users-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.users-table th {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.users-table td {
+  color: var(--color-text);
+  font-size: 0.93rem;
+}
+
+@media (max-width: 1080px) {
+  .users-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .users-header,
+  .users-actions {
+    flex-direction: column;
+  }
+
+  .users-form-grid,
+  .users-lookup {
+    grid-template-columns: 1fr;
+  }
+}

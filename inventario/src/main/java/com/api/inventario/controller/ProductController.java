@@ -3,6 +3,7 @@ package com.api.inventario.controller;
 import com.api.inventario.dto.ProductCreateRequest;
 import com.api.inventario.dto.PageResponse;
 import com.api.inventario.dto.ProductResponse;
+import com.api.inventario.dto.ProductSkuResponse;
 import com.api.inventario.dto.ProductUpdateRequest;
 import com.api.inventario.service.ProductService;
 import jakarta.validation.Valid;
@@ -43,6 +44,12 @@ public class ProductController {
             @RequestParam(defaultValue = "20") int size) {
         // Retorna productos activos con filtros y paginacion.
         return productService.searchActive(sku, name, category, page, size);
+    }
+
+    @GetMapping("/next-sku")
+    public ProductSkuResponse getNextSku() {
+        // Permite al frontend mostrar el proximo SKU sin crear aun el producto.
+        return productService.getNextSku();
     }
 
     @GetMapping("/{id}")

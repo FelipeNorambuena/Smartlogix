@@ -1,5 +1,9 @@
 import { AUTH_STORAGE_KEY } from '../constants/authConstants'
 
+/*
+ * Carga una sesion previa desde storage.
+ * Se revisan ambos storages porque el usuario puede elegir recordar sesion.
+ */
 export function loadStoredSession() {
   if (typeof window === 'undefined') {
     return null
@@ -16,11 +20,15 @@ export function loadStoredSession() {
   try {
     return JSON.parse(storedSession)
   } catch {
+    // Si el JSON esta corrupto, se limpia para no bloquear futuros logins.
     clearStoredSession()
     return null
   }
 }
 
+/*
+ * Persiste solo los datos necesarios para reconstruir la sesion del frontend.
+ */
 export function persistSession(authData, rememberSession) {
   const sessionPayload = {
     token: authData.token,

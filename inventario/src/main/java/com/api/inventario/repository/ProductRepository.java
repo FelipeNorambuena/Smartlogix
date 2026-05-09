@@ -28,6 +28,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     // Lista solo productos visibles para la API publica.
     List<Product> findByActiveTrue();
 
+    // Entrega SKUs existentes para calcular el siguiente codigo automatico.
+    @Query("select p.sku from Product p where p.sku like concat(:prefix, '%')")
+    List<String> findSkusByPrefix(@Param("prefix") String prefix);
+
     // Lista productos activos con filtros opcionales y paginacion.
     @Query("""
             select p

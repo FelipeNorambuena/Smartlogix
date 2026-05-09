@@ -1,6 +1,10 @@
 import { OPERATION_MODULES } from '../constants/authConstants'
 import '../styles/brand-panel.css'
 
+/*
+ * Panel de identidad del login.
+ * Mantiene la marca y el resumen de modulos separado del formulario.
+ */
 function BrandPanel() {
   return (
     <section className="brand-panel" aria-label="SmartLogix">
@@ -21,6 +25,7 @@ function BrandPanel() {
       </div>
 
       <div className="workflow-board" aria-label="Flujo operativo">
+        {/* Indicador visual del flujo operativo entre modulos. */}
         <div className="workflow-track" aria-hidden="true">
           <span></span>
           <span></span>
