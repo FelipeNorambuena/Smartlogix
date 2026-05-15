@@ -94,6 +94,13 @@ export function useUsersAdmin(session) {
     }))
   }
 
+  function resetCreateForm() {
+    // Limpia la creacion sin enviar datos al auth-service.
+    setUserForm(INITIAL_USER_FORM)
+    setErrorMessage('')
+    setSuccessMessage('')
+  }
+
   async function handleCreateUser(event) {
     event.preventDefault()
 
@@ -140,6 +147,22 @@ export function useUsersAdmin(session) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function selectUserForEdit(user) {
+    // Permite editar desde la tabla sin copiar manualmente el ID.
+    setLookupId(String(user.id))
+    setEditForm(mapUserToEditForm(user))
+    setErrorMessage('')
+    setSuccessMessage('')
+  }
+
+  function resetEditSearch() {
+    // Cancela cambios locales y deja la busqueda lista para otro ID.
+    setLookupId('')
+    setEditForm(INITIAL_EDIT_FORM)
+    setErrorMessage('')
+    setSuccessMessage('')
   }
 
   async function handleUpdateUser(event) {
@@ -245,6 +268,9 @@ export function useUsersAdmin(session) {
     isSaving,
     loadUsers,
     lookupId,
+    resetCreateForm,
+    resetEditSearch,
+    selectUserForEdit,
     setLookupId,
     successMessage,
     toggleCreateRole,

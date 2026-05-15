@@ -1,0 +1,284 @@
+{
+  "info": {
+    "name": "SmartLogix - Pedidos",
+    "description": "Coleccion para probar directamente el microservicio pedidos en http://localhost:8084. Para pruebas por API Gateway usar /orders con Bearer token; para pruebas directas se envian X-User-Id y X-User-Roles como headers internos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Filtrar pedidos por estado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders?status={{status}}&page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Filtrar pedidos por cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders?customerId={{customerId}}&page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Buscar pedido por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "Buscar pedidos por cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/customer/{{customerId}}?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Crear pedido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('orderId', response.id);",
+                  "  pm.collectionVariables.set('customerId', response.customerId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddress\": \"Av. Providencia 1234, Santiago\",\n  \"items\": [\n    {\n      \"sku\": \"{{sku}}\",\n      \"quantity\": {{quantity}}\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "Marcar pedido como enviado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{operatorRoles}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SHIPPED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status"
+          }
+        },
+        {
+          "name": "Marcar pedido como entregado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{operatorRoles}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status"
+          }
+        },
+        {
+          "name": "Cancelar pedido",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              },
+              {
+                "key": "X-User-Roles",
+                "value": "{{userRoles}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swagger UI",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/swagger-ui.html"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+    },
+    {
+      "key": "userRoles",
+      "value": "CLIENTE"
+    },
+    {
+      "key": "operatorRoles",
+      "value": "OPERADOR_PEDIDOS"
+    },
+    {
+      "key": "customerId",
+      "value": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+    },
+    {
+      "key": "orderId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "sku",
+      "value": "SLX-999"
+    },
+    {
+      "key": "quantity",
+      "value": "1"
+    },
+    {
+      "key": "status",
+      "value": "CONFIRMED"
+    },
+    {
+      "key": "page",
+      "value": "0"
+    },
+    {
+      "key": "size",
+      "value": "20"
+    }
+  ]
+}

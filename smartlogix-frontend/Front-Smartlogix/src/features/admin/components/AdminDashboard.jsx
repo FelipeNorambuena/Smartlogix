@@ -2,6 +2,7 @@ import { useState } from 'react'
 import UsersAdminSection from '../../authAdmin/components/UsersAdminSection'
 import SessionCard from '../../auth/components/SessionCard'
 import InventorySection from '../../inventory/components/InventorySection'
+import OrdersSection from '../../orders/components/OrdersSection'
 import { ADMIN_SECTIONS } from '../constants/adminSections'
 import '../styles/admin-dashboard.css'
 import AdminHome from './AdminHome'
@@ -76,12 +77,7 @@ function renderAdminSection(activeSection, session) {
   }
 
   if (activeSection === 'orders') {
-    return (
-      <ModulePlaceholder
-        moduleName="Pedidos"
-        routes={['/orders', '/orders/{id}', '/orders/customer/{customerId}']}
-      />
-    )
+    return <OrdersSection session={session} />
   }
 
   if (activeSection === 'shipping') {

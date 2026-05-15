@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   checkStockAvailability,
   confirmStock,
@@ -97,6 +97,48 @@ export function useInventoryAdmin(session) {
   const productTotalElements = productsPage?.totalElements || 0
   const productTotalPages = productsPage?.totalPages || 0
   const summary = calculateSummary(inventoryItems)
+
+  useEffect(() => {
+    if (!session?.token) {
+      return
+    }
+
+    loadDashboard()
+    // La carga inicial depende solo del token de sesion.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.token])
+
+  async function loadDashboard() {
+    if (!session?.token) {
+      return
+    }
+
+    setIsLoading(true)
+    setErrorMessage('')
+
+    try {
+      const [inventoryResponse, productsResponse] = await Promise.all([
+        fetchInventory({
+          filters: inventoryFilters,
+          page,
+          size: PAGE_SIZE,
+          token: session.token,
+        }),
+        fetchProducts({
+          filters: productFilters,
+          page: productPage,
+          size: PAGE_SIZE,
+          token: session.token,
+        }),
+      ])
+      setInventoryPage(inventoryResponse)
+      setProductsPage(productsResponse)
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   async function loadInventory(nextPage = page, nextFilters = inventoryFilters) {
     if (!session?.token) {
@@ -447,6 +489,41 @@ export function useInventoryAdmin(session) {
     }
   }
 
+  function selectProductForEdit(product) {
+    setSelectedProduct(product)
+    setEditProductForm(mapProductToEditForm(product))
+    setProductLookup((currentLookup) => ({
+      ...currentLookup,
+      productId: product.id || '',
+      sku: product.sku || '',
+    }))
+    setOperationForm((currentForm) => ({
+      ...currentForm,
+      productId: product.id || currentForm.productId,
+    }))
+    setSuccessMessage(`Producto ${product.sku} seleccionado para editar.`)
+    setErrorMessage('')
+  }
+
+  function selectInventoryForStock(item) {
+    const productId = item.productId || item.id || ''
+
+    setOperationForm((currentForm) => ({
+      ...currentForm,
+      productId,
+      stockAvailable: String(item.stockAvailable ?? ''),
+      stockReserved: String(item.stockReserved ?? '0'),
+      warehouseLocation: item.warehouseLocation || '',
+      reorderPoint: String(item.reorderPoint ?? '0'),
+    }))
+    setOperationResult({
+      title: `Stock ${item.sku}`,
+      data: item,
+    })
+    setSuccessMessage(`Inventario ${item.sku} seleccionado para operar stock.`)
+    setErrorMessage('')
+  }
+
   async function runOperation(title, requestFactory) {
     const productId = operationForm.productId.trim()
     if (!productId) {
@@ -511,12 +588,15 @@ export function useInventoryAdmin(session) {
     handleReserveStock,
     searchProductById,
     searchProductBySku,
+    selectInventoryForStock,
+    selectProductForEdit,
     handleStockDetail,
     handleUpdateProduct,
     inventoryFilters,
     inventoryItems,
     isLoading,
     isSaving,
+    loadDashboard,
     loadInventory,
     loadNextSku,
     loadProducts,

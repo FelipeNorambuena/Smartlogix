@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/inventory", "/inventory/**").hasAnyRole("ADMIN", "OPERADOR_INVENTARIO")
-                        .requestMatchers("/orders/**").hasAnyRole("ADMIN", "OPERADOR_PEDIDOS", "CLIENTE")
+                        .requestMatchers("/orders", "/orders/**").hasAnyRole("ADMIN", "OPERADOR_PEDIDOS", "CLIENTE")
                         .requestMatchers("/shipping", "/shipping/**").hasAnyRole("ADMIN", "OPERADOR_ENVIOS")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

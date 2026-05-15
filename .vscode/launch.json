@@ -20,7 +20,8 @@
             "mainClass": "com.api.envios.EnviosApplication",
             "projectName": "envios",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote"
         },
         {
             "type": "java",
@@ -30,7 +31,8 @@
             "mainClass": "com.api.inventario.InventarioApplication",
             "projectName": "inventario",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote"
         },
         {
             "type": "java",
@@ -50,6 +52,17 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.smartlogix.api_gateway.ApiGatewayApplication",
             "projectName": "api-gateway",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PedidosApplication<pedidos>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.api.pedidos.PedidosApplication",
+            "projectName": "pedidos",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
