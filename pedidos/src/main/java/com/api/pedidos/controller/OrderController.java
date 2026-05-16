@@ -9,6 +9,7 @@ import com.api.pedidos.service.OrderService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.UUID;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,8 +60,9 @@ public class OrderController {
     public ResponseEntity<OrderResponse> createOrder(
             @RequestHeader(value = "X-User-Id", required = false) String userId,
             @RequestHeader(value = "X-User-Roles", required = false) String roles,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
             @Valid @RequestBody OrderCreateRequest request) {
-        OrderResponse orderResponse = orderService.createOrder(request, userContext(userId, roles));
+        OrderResponse orderResponse = orderService.createOrder(request, userContext(userId, roles), authorization);
         return ResponseEntity
                 .created(URI.create("/api/orders/" + orderResponse.id()))
                 .body(orderResponse);

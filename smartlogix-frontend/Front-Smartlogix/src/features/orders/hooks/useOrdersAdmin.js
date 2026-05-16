@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { fetchUsers } from '../../authAdmin/services/userService'
 import {
   cancelOrder,
   createOrder,
@@ -19,12 +20,22 @@ const ORDER_STATUSES = [
   'PAYMENT_FAILED',
 ]
 
+const STATUS_TRANSITIONS = {
+  PENDING: ['CONFIRMED', 'CANCELLED', 'PAYMENT_FAILED'],
+  CONFIRMED: ['SHIPPED', 'CANCELLED'],
+  SHIPPED: ['DELIVERED'],
+  DELIVERED: [],
+  CANCELLED: [],
+  PAYMENT_FAILED: ['CANCELLED'],
+}
+
 const INITIAL_FILTERS = {
   customerId: '',
   status: '',
 }
 
 const INITIAL_ORDER_FORM = {
+  customerId: '',
   shippingAddress: '',
   items: [{ sku: '', quantity: '1' }],
 }
@@ -50,10 +61,12 @@ export function useOrdersAdmin(session) {
   const [statusForm, setStatusForm] = useState(INITIAL_STATUS_FORM)
   const [ordersPage, setOrdersPage] = useState(null)
   const [customerOrdersPage, setCustomerOrdersPage] = useState(null)
+  const [customers, setCustomers] = useState([])
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [page, setPage] = useState(0)
   const [customerPage, setCustomerPage] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -65,6 +78,10 @@ export function useOrdersAdmin(session) {
   const customerTotalElements = customerOrdersPage?.totalElements || 0
   const customerTotalPages = customerOrdersPage?.totalPages || 0
   const summary = calculateSummary(orders)
+  const isAdmin = Boolean(session?.user?.roles?.includes('ADMIN'))
+  const statusActionOptions = resolveStatusActionOptions(selectedOrder, statusForm.orderId)
+  const hasStatusActionOptions = statusActionOptions.length > 0
+  const canCancelSelectedOrder = resolveCanCancelSelectedOrder(selectedOrder, statusForm.orderId)
 
   useEffect(() => {
     if (!session?.token) {
@@ -72,6 +89,9 @@ export function useOrdersAdmin(session) {
     }
 
     loadOrders()
+    if (session.user?.roles?.includes('ADMIN')) {
+      loadCustomers()
+    }
     // La carga inicial depende solo del token de sesion.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.token])
@@ -96,6 +116,28 @@ export function useOrdersAdmin(session) {
       setErrorMessage(error.message)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function loadCustomers() {
+    if (!session?.token || !session.user?.roles?.includes('ADMIN')) {
+      return
+    }
+
+    setIsLoadingCustomers(true)
+    setErrorMessage('')
+
+    try {
+      const response = await fetchUsers({ token: session.token })
+      setCustomers(
+        (response || [])
+          .filter((user) => user.enabled && user.roles?.includes('CLIENTE'))
+          .sort(compareCustomers),
+      )
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsLoadingCustomers(false)
     }
   }
 
@@ -188,7 +230,7 @@ export function useOrdersAdmin(session) {
   async function handleCreateOrder(event) {
     event.preventDefault()
 
-    const validationMessage = validateOrderForm(orderForm)
+    const validationMessage = validateOrderForm(orderForm, isAdmin)
     if (validationMessage) {
       setErrorMessage(validationMessage)
       setSuccessMessage('')
@@ -271,6 +313,11 @@ export function useOrdersAdmin(session) {
     const orderId = statusForm.orderId.trim()
     if (!orderId) {
       setErrorMessage('Selecciona o ingresa el ID del pedido.')
+      return
+    }
+
+    if (!statusForm.status) {
+      setErrorMessage('El pedido seleccionado no permite nuevos cambios de estado.')
       return
     }
 
@@ -365,6 +412,7 @@ export function useOrdersAdmin(session) {
     addOrderItem,
     applyFilters,
     clearFilters,
+    customers,
     customerOrders,
     customerPage,
     customerTotalElements,
@@ -383,8 +431,11 @@ export function useOrdersAdmin(session) {
     handleStatusFormChange,
     handleUpdateStatus,
     isLoading,
+    isLoadingCustomers,
     isSaving,
+    isAdmin,
     loadCustomerOrders,
+    loadCustomers,
     loadOrders,
     lookup,
     orderForm,
@@ -395,11 +446,14 @@ export function useOrdersAdmin(session) {
     selectOrder,
     selectedOrder,
     statusForm,
+    statusActionOptions,
     statusOptions: ORDER_STATUSES,
     successMessage,
     summary,
     totalElements,
     totalPages,
+    hasStatusActionOptions,
+    canCancelSelectedOrder,
   }
 }
 
@@ -430,6 +484,7 @@ function calculateSummary(orders) {
 
 function buildOrderPayload(form) {
   return {
+    customerId: normalizeOptionalText(form.customerId),
     shippingAddress: form.shippingAddress.trim(),
     items: form.items.map((item) => ({
       sku: item.sku.trim(),
@@ -438,7 +493,11 @@ function buildOrderPayload(form) {
   }
 }
 
-function validateOrderForm(form) {
+function validateOrderForm(form, isAdmin) {
+  if (isAdmin && !form.customerId.trim()) {
+    return 'Selecciona un cliente para asignar el pedido.'
+  }
+
   if (!form.shippingAddress.trim()) {
     return 'Ingresa la direccion de envio.'
   }
@@ -466,17 +525,45 @@ function validateOrderForm(form) {
   return ''
 }
 
+function normalizeOptionalText(value) {
+  const normalized = value.trim()
+  return normalized ? normalized : null
+}
+
+function compareCustomers(firstCustomer, secondCustomer) {
+  return customerDisplayName(firstCustomer).localeCompare(
+    customerDisplayName(secondCustomer),
+    'es',
+    { sensitivity: 'base' },
+  )
+}
+
+function customerDisplayName(user) {
+  return [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || user.id
+}
+
 function nextSuggestedStatus(status) {
-  if (status === 'PENDING') {
-    return 'CONFIRMED'
+  return getAllowedNextStatuses(status)[0] || ''
+}
+
+function getAllowedNextStatuses(status) {
+  return STATUS_TRANSITIONS[status] || ORDER_STATUSES
+}
+
+function resolveStatusActionOptions(selectedOrder, orderId) {
+  if (!selectedOrder || selectedOrder.id !== orderId.trim()) {
+    return ORDER_STATUSES
   }
-  if (status === 'CONFIRMED') {
-    return 'SHIPPED'
+
+  return getAllowedNextStatuses(selectedOrder.status)
+}
+
+function resolveCanCancelSelectedOrder(selectedOrder, orderId) {
+  if (!selectedOrder || selectedOrder.id !== orderId.trim()) {
+    return true
   }
-  if (status === 'SHIPPED') {
-    return 'DELIVERED'
-  }
-  return 'SHIPPED'
+
+  return getAllowedNextStatuses(selectedOrder.status).includes('CANCELLED')
 }
 
 function shortId(id) {

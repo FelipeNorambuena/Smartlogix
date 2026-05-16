@@ -10,15 +10,23 @@ function InventorySection({ session }) {
   const inventory = useInventoryAdmin(session)
   const [openSections, setOpenSections] = useState({
     create: false,
-    operations: false,
+    operations: true,
     products: false,
-    stock: false,
+    stock: true,
   })
 
   function toggleSection(sectionId) {
     setOpenSections((currentSections) => ({
       ...currentSections,
       [sectionId]: !currentSections[sectionId],
+    }))
+  }
+
+  function handleSelectInventoryForStock(item) {
+    inventory.selectInventoryForStock(item)
+    setOpenSections((currentSections) => ({
+      ...currentSections,
+      operations: true,
     }))
   }
 
@@ -50,6 +58,7 @@ function InventorySection({ session }) {
       </div>
 
       <InventoryMessages inventory={inventory} />
+      <InventoryUsageNotice />
 
       <div className="inventory-summary" aria-label="Resumen de inventario">
         <SummaryItem label="Productos activos" value={inventory.productTotalElements} />
@@ -63,29 +72,18 @@ function InventorySection({ session }) {
         <CollapsibleInventorySection
           id="stock"
           isOpen={openSections.stock}
-          meta={`${inventory.totalElements} registros`}
           onToggle={toggleSection}
-          title="Stock registrado"
+          title="1. Revisar stock"
         >
-          <InventoryList inventory={inventory} />
-        </CollapsibleInventorySection>
-
-        <CollapsibleInventorySection
-          id="create"
-          isOpen={openSections.create}
-          meta={inventory.nextSku || 'SKU automatico'}
-          onToggle={toggleSection}
-          title="Nuevo producto"
-        >
-          <InventoryCreateForm inventory={inventory} />
+          <InventoryList inventory={inventory} onSelectInventory={handleSelectInventoryForStock} />
         </CollapsibleInventorySection>
 
         <CollapsibleInventorySection
           id="operations"
           isOpen={openSections.operations}
-          meta={inventory.operationForm.productId || 'Selecciona un producto'}
+          meta={inventory.operationForm.productId ? 'Producto seleccionado' : 'Selecciona desde la tabla'}
           onToggle={toggleSection}
-          title="Ajuste de stock"
+          title="2. Operar stock"
         >
           <InventoryOperationsPanel inventory={inventory} />
         </CollapsibleInventorySection>
@@ -93,11 +91,19 @@ function InventorySection({ session }) {
         <CollapsibleInventorySection
           id="products"
           isOpen={openSections.products}
-          meta={`${inventory.productTotalElements} productos activos`}
           onToggle={toggleSection}
-          title="Catalogo de productos"
+          title="3. Catalogo de productos"
         >
           <ProductAdminPanel inventory={inventory} />
+        </CollapsibleInventorySection>
+
+        <CollapsibleInventorySection
+          id="create"
+          isOpen={openSections.create}
+          onToggle={toggleSection}
+          title="4. Nuevo producto"
+        >
+          <InventoryCreateForm inventory={inventory} />
         </CollapsibleInventorySection>
       </div>
     </section>
@@ -149,6 +155,18 @@ function InventoryMessages({ inventory }) {
         </p>
       ) : null}
     </>
+  )
+}
+
+function InventoryUsageNotice() {
+  return (
+    <div className="inventory-usage-note" role="note">
+      <strong>Uso recomendado</strong>
+      <span>
+        Busca el producto en stock registrado, presiona Operar y luego aplica conteo,
+        reserva, liberacion, confirmacion o consulta de disponibilidad.
+      </span>
+    </div>
   )
 }
 
@@ -281,7 +299,7 @@ function InventoryField({
   )
 }
 
-function InventoryList({ inventory }) {
+function InventoryList({ inventory, onSelectInventory }) {
   const canGoBack = inventory.page > 0
   const canGoNext = inventory.totalPages > 0 && inventory.page + 1 < inventory.totalPages
 
@@ -352,11 +370,11 @@ function InventoryList({ inventory }) {
           <tbody>
             {inventory.inventoryItems.length > 0 ? (
               inventory.inventoryItems.map((item) => (
-                <InventoryRow
-                  item={item}
-                  key={item.id || item.productId}
-                  onSelect={inventory.selectInventoryForStock}
-                />
+                  <InventoryRow
+                    item={item}
+                    key={item.id || item.productId}
+                    onSelect={onSelectInventory}
+                  />
               ))
             ) : (
               <tr>
@@ -579,107 +597,173 @@ function ProductEditor({ inventory }) {
 }
 
 function InventoryOperationsPanel({ inventory }) {
+  const selectedLabel = getOperationProductLabel(inventory)
+
   return (
-    <div className="inventory-card">
-      <div className="inventory-card-heading">
-        <h3>Ajuste de stock</h3>
-        <p>{inventory.operationForm.productId || 'Sin producto seleccionado'}</p>
-      </div>
-
-      <InventoryField
-        label="ID producto"
-        name="productId"
-        onChange={inventory.handleOperationChange}
-        placeholder="UUID del producto"
-        value={inventory.operationForm.productId}
-      />
-
-      <div className="endpoint-actions compact-actions">
-        <button className="inventory-ghost-button" onClick={inventory.handleInventoryDetail} type="button">
-          Inventario
-        </button>
-        <button className="inventory-ghost-button" onClick={inventory.handleStockDetail} type="button">
-          Stock
-        </button>
-      </div>
-
-      <form className="inventory-form compact-form" onSubmit={inventory.handleInventoryUpdate}>
-        <div className="inventory-form-grid">
-          <InventoryField
-            label="Disponible"
-            min="0"
-            name="stockAvailable"
-            onChange={inventory.handleOperationChange}
-            type="number"
-            value={inventory.operationForm.stockAvailable}
-          />
-          <InventoryField
-            label="Reservado"
-            min="0"
-            name="stockReserved"
-            onChange={inventory.handleOperationChange}
-            type="number"
-            value={inventory.operationForm.stockReserved}
-          />
-          <InventoryField
-            label="Bodega"
-            name="warehouseLocation"
-            onChange={inventory.handleOperationChange}
-            value={inventory.operationForm.warehouseLocation}
-          />
-          <InventoryField
-            label="Reposicion"
-            min="0"
-            name="reorderPoint"
-            onChange={inventory.handleOperationChange}
-            type="number"
-            value={inventory.operationForm.reorderPoint}
-          />
-        </div>
-        <button className="inventory-primary-button" disabled={inventory.isSaving} type="submit">
-          Guardar stock
-        </button>
-      </form>
-
-      <div className="stock-operation-row">
-        <InventoryField
-          label="Cantidad"
-          min="1"
-          name="quantity"
-          onChange={inventory.handleOperationChange}
-          type="number"
-          value={inventory.operationForm.quantity}
-        />
-        <div className="endpoint-actions stock-actions">
-          <button className="inventory-ghost-button" onClick={inventory.handleReserveStock} type="button">
-            Reservar
-          </button>
-          <button className="inventory-ghost-button" onClick={inventory.handleReleaseStock} type="button">
-            Liberar
-          </button>
-          <button className="inventory-ghost-button" onClick={inventory.handleConfirmStock} type="button">
-            Confirmar
-          </button>
+    <div className="inventory-card stock-workflow-card">
+      <div className="inventory-card-heading inventory-card-heading-row">
+        <div>
+          <h3>Operar stock</h3>
+          <p>{selectedLabel}</p>
         </div>
       </div>
 
-      <div className="stock-operation-row">
-        <InventoryField
-          label="Disponibilidad"
-          min="1"
-          name="availabilityQuantity"
-          onChange={inventory.handleOperationChange}
-          type="number"
-          value={inventory.operationForm.availabilityQuantity}
-        />
-        <button className="inventory-ghost-button" onClick={inventory.handleAvailabilityCheck} type="button">
-          Consultar
-        </button>
+      <div className="stock-workflow-grid">
+        <section className="stock-workflow-panel">
+          <WorkflowStepHeading
+            number="1"
+            text="Selecciona desde la tabla o pega el UUID si necesitas operar manualmente."
+            title="Producto"
+          />
+          <InventoryField
+            label="ID producto"
+            name="productId"
+            onChange={inventory.handleOperationChange}
+            placeholder="UUID del producto"
+            value={inventory.operationForm.productId}
+          />
+          <StockSnapshot inventory={inventory} />
+        </section>
+
+        <form
+          className="stock-workflow-panel inventory-form"
+          onSubmit={inventory.handleInventoryUpdate}
+        >
+          <WorkflowStepHeading
+            number="2"
+            text="Carga el inventario actual, revisa stock libre o guarda un nuevo conteo."
+            title="Conteo"
+          />
+          <div className="inventory-form-grid">
+            <InventoryField
+              label="Disponible"
+              min="0"
+              name="stockAvailable"
+              onChange={inventory.handleOperationChange}
+              type="number"
+              value={inventory.operationForm.stockAvailable}
+            />
+            <InventoryField
+              label="Reservado"
+              min="0"
+              name="stockReserved"
+              onChange={inventory.handleOperationChange}
+              type="number"
+              value={inventory.operationForm.stockReserved}
+            />
+            <InventoryField
+              label="Bodega"
+              name="warehouseLocation"
+              onChange={inventory.handleOperationChange}
+              value={inventory.operationForm.warehouseLocation}
+            />
+            <InventoryField
+              label="Reposicion"
+              min="0"
+              name="reorderPoint"
+              onChange={inventory.handleOperationChange}
+              type="number"
+              value={inventory.operationForm.reorderPoint}
+            />
+          </div>
+          <div className="stock-count-actions">
+            <button className="inventory-ghost-button" onClick={inventory.handleInventoryDetail} type="button">
+              Cargar inventario
+            </button>
+            <button className="inventory-ghost-button" onClick={inventory.handleStockDetail} type="button">
+              Ver stock libre
+            </button>
+            <button className="inventory-primary-button" disabled={inventory.isSaving} type="submit">
+              Guardar conteo
+            </button>
+          </div>
+        </form>
+
+        <section className="stock-workflow-panel">
+          <WorkflowStepHeading
+            number="3"
+            text="Usa estos movimientos cuando hay pedidos o cancelaciones."
+            title="Movimiento"
+          />
+          <InventoryField
+            label="Cantidad"
+            min="1"
+            name="quantity"
+            onChange={inventory.handleOperationChange}
+            type="number"
+            value={inventory.operationForm.quantity}
+          />
+          <div className="endpoint-actions stock-actions">
+            <button className="inventory-ghost-button" onClick={inventory.handleReserveStock} type="button">
+              Reservar unidades
+            </button>
+            <button className="inventory-ghost-button" onClick={inventory.handleReleaseStock} type="button">
+              Liberar reserva
+            </button>
+            <button className="inventory-ghost-button" onClick={inventory.handleConfirmStock} type="button">
+              Confirmar salida
+            </button>
+          </div>
+        </section>
+
+        <section className="stock-workflow-panel">
+          <WorkflowStepHeading
+            number="4"
+            text="Valida si hay unidades libres antes de comprometer un pedido."
+            title="Disponibilidad"
+          />
+          <div className="stock-availability-row">
+            <InventoryField
+              label="Cantidad a validar"
+              min="1"
+              name="availabilityQuantity"
+              onChange={inventory.handleOperationChange}
+              type="number"
+              value={inventory.operationForm.availabilityQuantity}
+            />
+            <button className="inventory-ghost-button" onClick={inventory.handleAvailabilityCheck} type="button">
+              Consultar disponibilidad
+            </button>
+          </div>
+        </section>
       </div>
 
-      {inventory.operationResult ? (
+      {shouldShowOperationResult(inventory.operationResult) ? (
         <OperationResult result={inventory.operationResult} />
       ) : null}
+    </div>
+  )
+}
+
+function WorkflowStepHeading({ number, text, title }) {
+  return (
+    <div className="workflow-step-heading">
+      <span aria-hidden="true">{number}</span>
+      <div>
+        <h4>{title}</h4>
+        <p>{text}</p>
+      </div>
+    </div>
+  )
+}
+
+function StockSnapshot({ inventory }) {
+  const stockFree = calculateOperationStockFree(inventory.operationForm)
+
+  if (!inventory.operationForm.productId) {
+    return (
+      <p className="inventory-empty-note">
+        Aun no hay producto seleccionado para operar stock.
+      </p>
+    )
+  }
+
+  return (
+    <div className="stock-snapshot" aria-label="Producto seleccionado">
+      <ResultItem label="Disponible" value={inventory.operationForm.stockAvailable || '-'} />
+      <ResultItem label="Reservado" value={inventory.operationForm.stockReserved || '0'} />
+      <ResultItem label="Libre" value={stockFree} />
+      <ResultItem label="Bodega" value={inventory.operationForm.warehouseLocation || '-'} />
     </div>
   )
 }
@@ -739,10 +823,13 @@ function OperationResult({ result }) {
       <div className="operation-result-grid">
         {'sku' in data ? <ResultItem label="SKU" value={data.sku} /> : null}
         {'productName' in data ? <ResultItem label="Producto" value={data.productName} /> : null}
+        {'requestedQuantity' in data ? <ResultItem label="Solicitado" value={data.requestedQuantity} /> : null}
         {'stockAvailable' in data ? <ResultItem label="Disponible" value={data.stockAvailable} /> : null}
         {'stockReserved' in data ? <ResultItem label="Reservado" value={data.stockReserved} /> : null}
         {'stockFree' in data ? <ResultItem label="Libre" value={data.stockFree} /> : null}
-        {'available' in data ? <ResultItem label="Disponible" value={data.available ? 'Si' : 'No'} /> : null}
+        {'warehouseLocation' in data ? <ResultItem label="Bodega" value={data.warehouseLocation || '-'} /> : null}
+        {'productActive' in data ? <ResultItem label="Producto activo" value={data.productActive ? 'Si' : 'No'} /> : null}
+        {'available' in data ? <ResultItem label="Resultado" value={data.available ? 'Disponible' : 'Sin stock'} /> : null}
       </div>
     </div>
   )
@@ -790,6 +877,47 @@ function formatMoney(value) {
     currency: 'CLP',
     style: 'currency',
   })
+}
+
+function getOperationProductLabel(inventory) {
+  const resultData = inventory.operationResult?.data || {}
+  const product = inventory.selectedProduct
+
+  if (resultData.sku || resultData.productName) {
+    return [resultData.sku, resultData.productName].filter(Boolean).join(' - ')
+  }
+
+  if (product?.sku || product?.name) {
+    return [product.sku, product.name].filter(Boolean).join(' - ')
+  }
+
+  if (inventory.operationForm.productId) {
+    return `ID ${inventory.operationForm.productId}`
+  }
+
+  return 'Selecciona un producto en Stock registrado'
+}
+
+function calculateOperationStockFree(form) {
+  const stockAvailable = Number(form.stockAvailable)
+  const stockReserved = Number(form.stockReserved)
+
+  if (!Number.isFinite(stockAvailable) || !Number.isFinite(stockReserved)) {
+    return '-'
+  }
+
+  return stockAvailable - stockReserved
+}
+
+function shouldShowOperationResult(result) {
+  if (!result) {
+    return false
+  }
+
+  return ![
+    'Inventario del producto',
+    'Stock del producto',
+  ].includes(result.title) && !result.title.startsWith('Stock ')
 }
 
 export default InventorySection

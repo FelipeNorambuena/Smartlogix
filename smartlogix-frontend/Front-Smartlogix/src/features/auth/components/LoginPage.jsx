@@ -1,6 +1,8 @@
 import { useAuthSession } from '../hooks/useAuthSession'
 import '../styles/auth-page.css'
 import AdminDashboard from '../../admin/components/AdminDashboard'
+import InventoryOperatorDashboard from '../../inventoryOperator/components/InventoryOperatorDashboard'
+import OrdersOperatorDashboard from '../../ordersOperator/components/OrdersOperatorDashboard'
 import BrandPanel from './BrandPanel'
 import LoginForm from './LoginForm'
 import SessionCard from './SessionCard'
@@ -12,9 +14,19 @@ import SessionCard from './SessionCard'
 function LoginPage() {
   const authSession = useAuthSession()
   const isAdmin = authSession.roles.includes('ADMIN')
+  const isInventoryOperator = authSession.roles.includes('OPERADOR_INVENTARIO')
+  const isOrdersOperator = authSession.roles.includes('OPERADOR_PEDIDOS')
 
   if (authSession.session && isAdmin) {
     return <AdminDashboard authSession={authSession} />
+  }
+
+  if (authSession.session && isOrdersOperator) {
+    return <OrdersOperatorDashboard authSession={authSession} />
+  }
+
+  if (authSession.session && isInventoryOperator) {
+    return <InventoryOperatorDashboard authSession={authSession} />
   }
 
   return (

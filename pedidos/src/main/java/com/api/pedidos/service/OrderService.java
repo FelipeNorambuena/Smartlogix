@@ -1,11 +1,13 @@
 package com.api.pedidos.service;
 
+import com.api.pedidos.client.AuthUserClient;
 import com.api.pedidos.client.InventoryClient;
+import com.api.pedidos.dto.AuthUserResponse;
 import com.api.pedidos.dto.OrderCreateRequest;
 import com.api.pedidos.dto.OrderItemRequest;
+import com.api.pedidos.dto.OrderResponse;
 import com.api.pedidos.dto.OrderStatusUpdateRequest;
 import com.api.pedidos.dto.PageResponse;
-import com.api.pedidos.dto.OrderResponse;
 import com.api.pedidos.dto.ProductInfoResponse;
 import com.api.pedidos.dto.StockAvailabilityResponse;
 import com.api.pedidos.exception.BusinessRuleException;
@@ -23,11 +25,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -47,10 +49,15 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final InventoryClient inventoryClient;
+    private final AuthUserClient authUserClient;
 
-    public OrderService(OrderRepository orderRepository, InventoryClient inventoryClient) {
+    public OrderService(
+            OrderRepository orderRepository,
+            InventoryClient inventoryClient,
+            AuthUserClient authUserClient) {
         this.orderRepository = orderRepository;
         this.inventoryClient = inventoryClient;
+        this.authUserClient = authUserClient;
     }
 
     @Transactional(readOnly = true)
@@ -98,11 +105,15 @@ public class OrderService {
                 .map(OrderResponse::from));
     }
 
-    public OrderResponse createOrder(OrderCreateRequest request, UserContext userContext) {
+    public OrderResponse createOrder(
+            OrderCreateRequest request,
+            UserContext userContext,
+            String authorizationHeader) {
         validateUniqueSkus(request.items());
+        UUID customerId = resolveCustomerId(request.customerId(), userContext, authorizationHeader);
 
         Order order = new Order();
-        order.setCustomerId(userContext.userId());
+        order.setCustomerId(customerId);
         order.setShippingAddress(request.shippingAddress().trim());
         order.setStatus(OrderStatus.PENDING);
 
@@ -122,6 +133,31 @@ public class OrderService {
             releaseReservedStocks(reservedStocks);
             throw exception;
         }
+    }
+
+    private UUID resolveCustomerId(
+            UUID requestedCustomerId,
+            UserContext userContext,
+            String authorizationHeader) {
+        if (requestedCustomerId == null) {
+            return userContext.userId();
+        }
+
+        if (!userContext.isAdmin()) {
+            if (userContext.owns(requestedCustomerId)) {
+                return requestedCustomerId;
+            }
+            throw new ForbiddenException("Solo ADMIN puede asignar pedidos a otro cliente");
+        }
+
+        AuthUserResponse customer = authUserClient.findUserById(requestedCustomerId, authorizationHeader);
+        if (!customer.enabled()) {
+            throw new BusinessRuleException("El cliente asignado esta deshabilitado");
+        }
+        if (!AuthUserClient.hasRole(customer, "CLIENTE")) {
+            throw new BusinessRuleException("El usuario asignado debe tener rol CLIENTE");
+        }
+        return customer.id();
     }
 
     public OrderResponse updateStatus(

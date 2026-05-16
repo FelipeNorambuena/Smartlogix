@@ -344,6 +344,31 @@
   background: #e9f8f2;
 }
 
+.inventory-usage-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(22, 111, 111, 0.18);
+  border-radius: 8px;
+  color: var(--color-text);
+  background: var(--color-primary-soft);
+  line-height: 1.45;
+}
+
+.inventory-usage-note strong {
+  flex: 0 0 auto;
+  color: var(--color-primary-strong);
+  font-size: 0.86rem;
+}
+
+.inventory-usage-note span {
+  min-width: 0;
+  color: var(--color-muted-strong);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
 .inventory-list {
   min-width: 0;
 }
@@ -477,31 +502,121 @@
   accent-color: var(--color-primary);
 }
 
-.compact-form,
-.compact-actions {
-  margin-top: 16px;
-}
-
-.stock-operation-row {
-  display: grid;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.stock-actions .inventory-ghost-button {
-  flex: 1 1 96px;
-}
-
 .inventory-empty-note {
   margin: 0;
   color: var(--color-muted);
   line-height: 1.6;
 }
 
+.stock-workflow-card {
+  display: grid;
+  gap: 18px;
+}
+
+.stock-workflow-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.35fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.stock-workflow-panel {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.workflow-step-heading {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.workflow-step-heading > span {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--color-white);
+  background: var(--color-primary);
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.workflow-step-heading h4 {
+  margin: 0 0 4px;
+  color: var(--color-text);
+  font-size: 0.98rem;
+}
+
+.workflow-step-heading p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.stock-snapshot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.stock-snapshot div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.stock-snapshot span {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stock-snapshot strong {
+  color: var(--color-text);
+  font-size: 0.94rem;
+  overflow-wrap: anywhere;
+}
+
+.stock-count-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stock-count-actions .inventory-ghost-button,
+.stock-count-actions .inventory-primary-button {
+  width: 100%;
+  min-width: 0;
+}
+
+.stock-actions .inventory-ghost-button {
+  flex: 1 1 150px;
+}
+
+.stock-availability-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
 .operation-result {
   display: grid;
   gap: 12px;
-  margin-top: 18px;
   padding: 14px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -537,7 +652,8 @@
 
 @media (max-width: 1240px) {
   .inventory-workspace,
-  .inventory-product-layout {
+  .inventory-product-layout,
+  .stock-workflow-grid {
     grid-template-columns: 1fr;
   }
 
@@ -566,8 +682,14 @@
   .inventory-summary,
   .inventory-form-grid,
   .endpoint-actions-grid,
-  .inventory-filters {
+  .inventory-filters,
+  .stock-count-actions,
+  .stock-availability-row {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-usage-note {
+    display: grid;
   }
 
   .inventory-card {

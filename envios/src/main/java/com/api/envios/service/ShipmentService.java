@@ -1,5 +1,7 @@
 package com.api.envios.service;
 
+import com.api.envios.client.OrdersClient;
+import com.api.envios.dto.OrderInfoResponse;
 import com.api.envios.dto.PageResponse;
 import com.api.envios.dto.ShipmentCreateRequest;
 import com.api.envios.dto.ShipmentEventResponse;
@@ -39,6 +41,7 @@ public class ShipmentService {
     private static final String STATUS_FAILED = "failed";
     private static final String STATUS_RETURNED = "returned";
     private static final String STATUS_CANCELLED = "cancelled";
+    private static final String ORDER_STATUS_CONFIRMED = "CONFIRMED";
 
     private static final Set<String> ALLOWED_STATUSES = Set.of(
             STATUS_PENDING,
@@ -60,12 +63,15 @@ public class ShipmentService {
 
     private final ShipmentRepository shipmentRepository;
     private final ShipmentEventRepository shipmentEventRepository;
+    private final OrdersClient ordersClient;
 
     public ShipmentService(
             ShipmentRepository shipmentRepository,
-            ShipmentEventRepository shipmentEventRepository) {
+            ShipmentEventRepository shipmentEventRepository,
+            OrdersClient ordersClient) {
         this.shipmentRepository = shipmentRepository;
         this.shipmentEventRepository = shipmentEventRepository;
+        this.ordersClient = ordersClient;
     }
 
     @Transactional(readOnly = true)
@@ -122,6 +128,9 @@ public class ShipmentService {
     }
 
     public ShipmentResponse create(ShipmentCreateRequest request) {
+        OrderInfoResponse order = ordersClient.findOrderById(request.orderId());
+        validateOrderIsReadyForShipping(order);
+
         // Un pedido solo puede tener un envio; se evita duplicar despachos.
         if (shipmentRepository.existsByOrderId(request.orderId())) {
             throw new BusinessRuleException("Ya existe un envio para el pedido " + request.orderId());
@@ -134,7 +143,7 @@ public class ShipmentService {
         Shipment shipment = new Shipment();
         shipment.setOrderId(request.orderId());
         shipment.setStatus(STATUS_PENDING);
-        shipment.setShippingAddress(request.shippingAddress().trim());
+        shipment.setShippingAddress(resolveShippingAddress(request, order));
         shipment.setCarrier(trimToNull(request.carrier()));
         shipment.setTrackingNumber(trackingNumber);
 
@@ -188,6 +197,24 @@ public class ShipmentService {
     private Shipment findEntityById(UUID id) {
         return shipmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Envio no encontrado con id " + id));
+    }
+
+    private void validateOrderIsReadyForShipping(OrderInfoResponse order) {
+        if (order == null || order.id() == null) {
+            throw new ResourceNotFoundException("Pedido no encontrado para crear envio");
+        }
+        if (!ORDER_STATUS_CONFIRMED.equalsIgnoreCase(order.status())) {
+            throw new BusinessRuleException(
+                    "Solo se puede crear envio para pedidos confirmados. Estado actual: " + order.status());
+        }
+        if (trimToNull(order.shippingAddress()) == null) {
+            throw new BusinessRuleException("El pedido no tiene direccion de envio");
+        }
+    }
+
+    private String resolveShippingAddress(ShipmentCreateRequest request, OrderInfoResponse order) {
+        String requestAddress = trimToNull(request.shippingAddress());
+        return requestAddress != null ? requestAddress : order.shippingAddress().trim();
     }
 
     private void registerEvent(

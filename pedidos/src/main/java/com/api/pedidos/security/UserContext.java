@@ -16,6 +16,7 @@ public record UserContext(
         Set<String> roles) {
 
     private static final Set<String> ORDER_OPERATOR_ROLES = Set.of("ADMIN", "OPERADOR_PEDIDOS");
+    private static final String ADMIN_ROLE = "ADMIN";
 
     public static UserContext fromHeaders(String userIdHeader, String rolesHeader) {
         if (userIdHeader == null || userIdHeader.isBlank()) {
@@ -31,6 +32,10 @@ public record UserContext(
 
     public boolean canManageOrders() {
         return roles.stream().anyMatch(ORDER_OPERATOR_ROLES::contains);
+    }
+
+    public boolean isAdmin() {
+        return roles.contains(ADMIN_ROLE);
     }
 
     public boolean owns(UUID customerId) {

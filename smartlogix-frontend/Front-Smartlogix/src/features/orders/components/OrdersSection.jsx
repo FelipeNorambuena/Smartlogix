@@ -2,21 +2,29 @@ import { useState } from 'react'
 import { useOrdersAdmin } from '../hooks/useOrdersAdmin'
 import '../styles/orders-section.css'
 
+const DEFAULT_OPEN_SECTIONS = {
+  create: false,
+  customer: false,
+  detail: false,
+  list: false,
+  status: false,
+}
+
 /*
  * Seccion administrativa de pedidos.
  * Consume rutas /orders desde API Gateway y mantiene la UI desacoplada del modelo JPA.
  */
-function OrdersSection({ session }) {
+function OrdersSection({ allowCreate = true, initialOpenSections, session }) {
   const ordersAdmin = useOrdersAdmin(session)
-  const [openSections, setOpenSections] = useState({
-    create: false,
-    customer: false,
-    detail: false,
-    list: false,
-    status: false,
-  })
+  const [openSections, setOpenSections] = useState(() =>
+    buildOpenSections(allowCreate, initialOpenSections),
+  )
 
   function toggleSection(sectionId) {
+    if (sectionId === 'create' && !allowCreate) {
+      return
+    }
+
     setOpenSections((currentSections) => ({
       ...currentSections,
       [sectionId]: !currentSections[sectionId],
@@ -61,15 +69,17 @@ function OrdersSection({ session }) {
           <OrdersList ordersAdmin={ordersAdmin} />
         </CollapsibleOrdersSection>
 
-        <CollapsibleOrdersSection
-          id="create"
-          isOpen={openSections.create}
-          meta="SKU y cantidad"
-          onToggle={toggleSection}
-          title="Nuevo pedido"
-        >
-          <OrderCreateForm ordersAdmin={ordersAdmin} />
-        </CollapsibleOrdersSection>
+        {allowCreate ? (
+          <CollapsibleOrdersSection
+            id="create"
+            isOpen={openSections.create}
+            meta="SKU y cantidad"
+            onToggle={toggleSection}
+            title="Nuevo pedido"
+          >
+            <OrderCreateForm ordersAdmin={ordersAdmin} />
+          </CollapsibleOrdersSection>
+        ) : null}
 
         <CollapsibleOrdersSection
           id="detail"
@@ -103,6 +113,19 @@ function OrdersSection({ session }) {
       </div>
     </section>
   )
+}
+
+function buildOpenSections(allowCreate, initialOpenSections) {
+  const nextSections = {
+    ...DEFAULT_OPEN_SECTIONS,
+    ...initialOpenSections,
+  }
+
+  if (!allowCreate) {
+    nextSections.create = false
+  }
+
+  return nextSections
 }
 
 function CollapsibleOrdersSection({ children, id, isOpen, meta, onToggle, title }) {
@@ -231,6 +254,34 @@ function OrdersList({ ordersAdmin }) {
 function OrderCreateForm({ ordersAdmin }) {
   return (
     <form className="orders-form" onSubmit={ordersAdmin.handleCreateOrder}>
+      {ordersAdmin.isAdmin ? (
+        <div className="orders-customer-picker">
+          <label className="orders-field">
+            <span>Cliente asignado</span>
+            <select
+              name="customerId"
+              onChange={ordersAdmin.handleOrderFormChange}
+              value={ordersAdmin.orderForm.customerId}
+            >
+              <option value="">Selecciona un cliente</option>
+              {ordersAdmin.customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customerOptionLabel(customer)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="orders-ghost-button"
+            disabled={ordersAdmin.isLoadingCustomers}
+            onClick={ordersAdmin.loadCustomers}
+            type="button"
+          >
+            {ordersAdmin.isLoadingCustomers ? 'Cargando...' : 'Actualizar clientes'}
+          </button>
+        </div>
+      ) : null}
+
       <label className="orders-field orders-field-wide">
         <span>Direccion de envio</span>
         <textarea
@@ -328,11 +379,12 @@ function OrderStatusPanel({ ordersAdmin }) {
         <label className="orders-field">
           <span>Estado</span>
           <select
+            disabled={!ordersAdmin.hasStatusActionOptions}
             name="status"
             onChange={ordersAdmin.handleStatusFormChange}
             value={ordersAdmin.statusForm.status}
           >
-            {ordersAdmin.statusOptions.map((status) => (
+            {ordersAdmin.statusActionOptions.map((status) => (
               <option key={status} value={status}>
                 {statusLabel(status)}
               </option>
@@ -341,13 +393,21 @@ function OrderStatusPanel({ ordersAdmin }) {
         </label>
       </div>
 
+      {!ordersAdmin.hasStatusActionOptions ? (
+        <p className="orders-empty-note">Este pedido no permite nuevos cambios de estado.</p>
+      ) : null}
+
       <div className="orders-actions">
-        <button className="orders-primary-button" disabled={ordersAdmin.isSaving} type="submit">
+        <button
+          className="orders-primary-button"
+          disabled={ordersAdmin.isSaving || !ordersAdmin.hasStatusActionOptions}
+          type="submit"
+        >
           Actualizar estado
         </button>
         <button
           className="orders-danger-button"
-          disabled={ordersAdmin.isSaving}
+          disabled={ordersAdmin.isSaving || !ordersAdmin.canCancelSelectedOrder}
           onClick={ordersAdmin.handleCancelOrder}
           type="button"
         >
@@ -537,6 +597,14 @@ function statusLabel(status) {
   }
 
   return labels[status] || status
+}
+
+function customerOptionLabel(customer) {
+  const name = [customer.firstName, customer.lastName].filter(Boolean).join(' ')
+  if (name && customer.email) {
+    return `${name} - ${customer.email}`
+  }
+  return customer.email || customer.id
 }
 
 function shortId(id) {
