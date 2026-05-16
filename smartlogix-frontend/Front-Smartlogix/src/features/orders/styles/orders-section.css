@@ -162,6 +162,7 @@
 }
 
 .orders-filters,
+.orders-customer-picker,
 .orders-lookup,
 .orders-form-grid,
 .orders-item-row {
@@ -171,6 +172,11 @@
 
 .orders-filters {
   grid-template-columns: minmax(0, 1fr) minmax(180px, 240px) auto auto;
+}
+
+.orders-customer-picker {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
 }
 
 .orders-lookup {
@@ -458,6 +464,7 @@
   }
 
   .orders-filters,
+  .orders-customer-picker,
   .orders-item-row {
     grid-template-columns: 1fr;
   }

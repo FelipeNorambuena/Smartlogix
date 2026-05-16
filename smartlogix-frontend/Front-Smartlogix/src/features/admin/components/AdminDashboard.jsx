@@ -3,6 +3,7 @@ import UsersAdminSection from '../../authAdmin/components/UsersAdminSection'
 import SessionCard from '../../auth/components/SessionCard'
 import InventorySection from '../../inventory/components/InventorySection'
 import OrdersSection from '../../orders/components/OrdersSection'
+import ShippingSection from '../../shipping/components/ShippingSection'
 import { ADMIN_SECTIONS } from '../constants/adminSections'
 import '../styles/admin-dashboard.css'
 import AdminHome from './AdminHome'
@@ -81,12 +82,7 @@ function renderAdminSection(activeSection, session) {
   }
 
   if (activeSection === 'shipping') {
-    return (
-      <ModulePlaceholder
-        moduleName="Env&iacute;os"
-        routes={['/shipping', '/shipping/{id}', '/shipping/order/{orderId}']}
-      />
-    )
+    return <ShippingSection session={session} />
   }
 
   return <AdminHome session={session} />

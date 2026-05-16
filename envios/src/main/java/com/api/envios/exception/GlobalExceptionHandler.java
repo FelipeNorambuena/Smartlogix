@@ -42,6 +42,14 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request, Map.of());
     }
 
+    @ExceptionHandler(ExternalServiceUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleExternalUnavailable(
+            ExternalServiceUnavailableException exception,
+            HttpServletRequest request) {
+        // Dependencia externa no disponible, por ejemplo pedidos-service.
+        return build(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request, Map.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,

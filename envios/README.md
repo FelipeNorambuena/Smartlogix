@@ -12,7 +12,10 @@ Microservicio Spring Boot encargado de administrar envios y eventos de tracking 
 - Se agrego manejo global de errores con respuestas JSON consistentes, igual que en Inventario.
 - Se agrego autenticacion interna por `X-API-Key`, desactivable en desarrollo si la clave queda vacia.
 - Se agrego migracion Flyway `V1__create_shipping_schema.sql` para crear las tablas `shipments` y `shipment_events`.
+- Se agrego base de datos propia por defecto: `smartlogix_shipping`.
+- Se agrego cliente REST hacia `pedidos-service` con Circuit Breaker para validar que el pedido exista y este `CONFIRMED` antes de crear un envio.
 - Se agrego configuracion de pruebas con H2 para que el contexto de Spring pueda levantarse sin depender de MySQL.
+- Se agregaron pruebas unitarias de `ShipmentService` para reglas de creacion, duplicados y transiciones.
 - Se conecto el microservicio al `api-gateway` mediante la ruta externa `/shipping/**`.
 - Se creo una coleccion Postman para probar la API: `postman/smartlogix-envios.postman_collection.json`.
 
@@ -70,15 +73,36 @@ Transiciones principales:
 
 ```properties
 SERVER_PORT=8083
-DB_URL=jdbc:mysql://localhost:3306/smartlogix?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+DB_URL=jdbc:mysql://localhost:3306/smartlogix_shipping?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 DB_USERNAME=root
 DB_PASSWORD=
 ENVIOS_API_KEY=
 ENVIOS_API_KEY_HEADER=X-API-Key
+ORDERS_SERVICE_URL=http://localhost:8084
+PEDIDOS_API_KEY=
+PEDIDOS_API_KEY_HEADER=X-API-Key
+ENVIOS_SERVICE_USER_ID=00000000-0000-0000-0000-000000000000
+ENVIOS_SERVICE_ROLES=ADMIN
 FLYWAY_ENABLED=true
 ```
 
 Si `ENVIOS_API_KEY` queda vacia, el filtro de API key no se aplica. Para llamadas internas protegidas, usar el mismo valor en `envios` y en `api-gateway`.
+
+Para desarrollo local en MySQL/Laragon, primero ejecutar:
+
+```text
+smartlogix_shipping_mysql_laragon.sql
+```
+
+Flyway crea las tablas al iniciar el servicio.
+
+## Integracion con pedidos
+
+`POST /api/shipments` valida el `orderId` consultando `pedidos-service`.
+
+- Solo permite crear envios para pedidos con estado `CONFIRMED`.
+- Si `shippingAddress` viene vacia o null, usa la direccion del pedido.
+- Si `pedidos-service` no responde, devuelve un error controlado `503 Service Unavailable`.
 
 ## Configuracion agregada al gateway
 
@@ -100,17 +124,15 @@ Seguridad:
 Se ejecuto correctamente:
 
 ```text
-C:\apache-maven-3.9.15\bin\mvn.cmd test
+mvn test
 ```
 
 Resultado en `envios`:
 
 ```text
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
-
-Tambien se ejecuto correctamente en `api-gateway` para validar la nueva ruta de shipping.
 
 ## Postman
 

@@ -7,7 +7,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.api.pedidos.client.AuthUserClient;
 import com.api.pedidos.client.InventoryClient;
+import com.api.pedidos.dto.AuthUserResponse;
 import com.api.pedidos.dto.OrderCreateRequest;
 import com.api.pedidos.dto.OrderItemRequest;
 import com.api.pedidos.dto.OrderResponse;
@@ -45,6 +47,9 @@ class OrderServiceTest {
     @Mock
     private InventoryClient inventoryClient;
 
+    @Mock
+    private AuthUserClient authUserClient;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -54,13 +59,14 @@ class OrderServiceTest {
         UUID productId = UUID.randomUUID();
         OrderCreateRequest request = new OrderCreateRequest(
                 "Santiago Centro 123",
-                List.of(new OrderItemRequest("sku-001", 2)));
+                List.of(new OrderItemRequest("sku-001", 2)),
+                null);
 
         when(inventoryClient.findProductBySku("SKU-001")).thenReturn(product(productId));
         when(inventoryClient.checkAvailability(productId, 2)).thenReturn(availability(productId, true));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        OrderResponse response = orderService.createOrder(request, client(customerId));
+        OrderResponse response = orderService.createOrder(request, client(customerId), null);
 
         assertThat(response.customerId()).isEqualTo(customerId);
         assertThat(response.status()).isEqualTo(OrderStatus.CONFIRMED);
@@ -74,11 +80,77 @@ class OrderServiceTest {
                 "Santiago Centro 123",
                 List.of(
                         new OrderItemRequest("sku-001", 1),
-                        new OrderItemRequest(" SKU-001 ", 1)));
+                        new OrderItemRequest(" SKU-001 ", 1)),
+                null);
 
-        assertThatThrownBy(() -> orderService.createOrder(request, client(UUID.randomUUID())))
+        assertThatThrownBy(() -> orderService.createOrder(request, client(UUID.randomUUID()), null))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("duplicado");
+
+        verify(inventoryClient, never()).findProductBySku(any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void adminCanCreateOrderForClienteUser() {
+        UUID adminId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        OrderCreateRequest request = new OrderCreateRequest(
+                "Santiago Centro 123",
+                List.of(new OrderItemRequest("sku-001", 2)),
+                customerId);
+
+        when(authUserClient.findUserById(customerId, "Bearer token")).thenReturn(cliente(customerId));
+        when(inventoryClient.findProductBySku("SKU-001")).thenReturn(product(productId));
+        when(inventoryClient.checkAvailability(productId, 2)).thenReturn(availability(productId, true));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponse response = orderService.createOrder(request, admin(adminId), "Bearer token");
+
+        assertThat(response.customerId()).isEqualTo(customerId);
+        verify(authUserClient).findUserById(customerId, "Bearer token");
+    }
+
+    @Test
+    void nonAdminCannotCreateOrderForAnotherCustomer() {
+        UUID customerId = UUID.randomUUID();
+        OrderCreateRequest request = new OrderCreateRequest(
+                "Santiago Centro 123",
+                List.of(new OrderItemRequest("sku-001", 2)),
+                customerId);
+
+        assertThatThrownBy(() -> orderService.createOrder(request, client(UUID.randomUUID()), null))
+                .isInstanceOf(com.api.pedidos.exception.ForbiddenException.class)
+                .hasMessageContaining("Solo ADMIN");
+
+        verify(authUserClient, never()).findUserById(any(), any());
+        verify(inventoryClient, never()).findProductBySku(any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void adminCannotAssignOrderToNonClienteUser() {
+        UUID customerId = UUID.randomUUID();
+        OrderCreateRequest request = new OrderCreateRequest(
+                "Santiago Centro 123",
+                List.of(new OrderItemRequest("sku-001", 2)),
+                customerId);
+
+        when(authUserClient.findUserById(customerId, "Bearer token"))
+                .thenReturn(new AuthUserResponse(
+                        customerId,
+                        "operator@smartlogix.com",
+                        "Operador",
+                        "Pedidos",
+                        true,
+                        List.of("OPERADOR_PEDIDOS"),
+                        OffsetDateTime.now(),
+                        OffsetDateTime.now()));
+
+        assertThatThrownBy(() -> orderService.createOrder(request, admin(UUID.randomUUID()), "Bearer token"))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("rol CLIENTE");
 
         verify(inventoryClient, never()).findProductBySku(any());
         verify(orderRepository, never()).save(any());
@@ -123,6 +195,22 @@ class OrderServiceTest {
 
     private UserContext operator() {
         return new UserContext(UUID.randomUUID(), Set.of("OPERADOR_PEDIDOS"));
+    }
+
+    private UserContext admin(UUID adminId) {
+        return new UserContext(adminId, Set.of("ADMIN"));
+    }
+
+    private AuthUserResponse cliente(UUID customerId) {
+        return new AuthUserResponse(
+                customerId,
+                "cliente@smartlogix.com",
+                "Cliente",
+                "Demo",
+                true,
+                List.of("CLIENTE"),
+                OffsetDateTime.now(),
+                OffsetDateTime.now());
     }
 
     private ProductInfoResponse product(UUID productId) {
