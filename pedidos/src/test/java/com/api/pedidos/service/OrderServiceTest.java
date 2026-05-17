@@ -3,6 +3,8 @@ package com.api.pedidos.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +31,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -189,12 +193,38 @@ class OrderServiceTest {
         verify(inventoryClient).confirmReservedStock(productId, 3);
     }
 
+    @Test
+    void shippingOperatorCanSearchOperationalOrdersWithoutCustomerRestriction() {
+        when(orderRepository.search(isNull(), eq(OrderStatus.SHIPPED), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        orderService.search(shippingOperator(), null, "SHIPPED", 0, 10);
+
+        verify(orderRepository).search(isNull(), eq(OrderStatus.SHIPPED), any(Pageable.class));
+    }
+
+    @Test
+    void shippingOperatorCannotUpdateOrderStatus() {
+        assertThatThrownBy(() -> orderService.updateStatus(
+                shippingOperator(),
+                UUID.randomUUID(),
+                new com.api.pedidos.dto.OrderStatusUpdateRequest("delivered")))
+                .isInstanceOf(com.api.pedidos.exception.ForbiddenException.class)
+                .hasMessageContaining("Solo ADMIN u OPERADOR_PEDIDOS");
+
+        verify(orderRepository, never()).findByIdForUpdate(any());
+    }
+
     private UserContext client(UUID customerId) {
         return new UserContext(customerId, Set.of("CLIENTE"));
     }
 
     private UserContext operator() {
         return new UserContext(UUID.randomUUID(), Set.of("OPERADOR_PEDIDOS"));
+    }
+
+    private UserContext shippingOperator() {
+        return new UserContext(UUID.randomUUID(), Set.of("OPERADOR_ENVIOS"));
     }
 
     private UserContext admin(UUID adminId) {

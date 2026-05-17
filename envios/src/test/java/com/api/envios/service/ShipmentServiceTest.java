@@ -77,6 +77,33 @@ class ShipmentServiceTest {
     }
 
     @Test
+    void createFromShippedOrderStartsInTransitAndRegistersEvent() {
+        UUID orderId = UUID.randomUUID();
+        ShipmentCreateRequest request = new ShipmentCreateRequest(
+                orderId,
+                null,
+                null,
+                null);
+
+        when(ordersClient.findOrderById(orderId)).thenReturn(order(orderId, "SHIPPED"));
+        when(shipmentRepository.existsByOrderId(orderId)).thenReturn(false);
+        when(shipmentRepository.save(any(Shipment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(shipmentEventRepository.save(any(ShipmentEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ShipmentResponse response = shipmentService.create(request);
+
+        assertThat(response.orderId()).isEqualTo(orderId);
+        assertThat(response.status()).isEqualTo("in_transit");
+        assertThat(response.shippedAt()).isNotNull();
+
+        ArgumentCaptor<ShipmentEvent> eventCaptor = ArgumentCaptor.forClass(ShipmentEvent.class);
+        verify(shipmentEventRepository).save(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getStatus()).isEqualTo("in_transit");
+        assertThat(eventCaptor.getValue().getDescription()).isEqualTo("Envio creado");
+        assertThat(eventCaptor.getValue().getOccurredAt()).isEqualTo(response.shippedAt());
+    }
+
+    @Test
     void createRejectsOrderThatIsNotConfirmed() {
         UUID orderId = UUID.randomUUID();
         ShipmentCreateRequest request = new ShipmentCreateRequest(

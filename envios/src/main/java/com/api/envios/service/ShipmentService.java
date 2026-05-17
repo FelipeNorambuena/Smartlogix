@@ -42,6 +42,7 @@ public class ShipmentService {
     private static final String STATUS_RETURNED = "returned";
     private static final String STATUS_CANCELLED = "cancelled";
     private static final String ORDER_STATUS_CONFIRMED = "CONFIRMED";
+    private static final String ORDER_STATUS_SHIPPED = "SHIPPED";
 
     private static final Set<String> ALLOWED_STATUSES = Set.of(
             STATUS_PENDING,
@@ -142,13 +143,18 @@ public class ShipmentService {
         // Se construye la entidad desde el DTO para no exponer el modelo JPA en la API.
         Shipment shipment = new Shipment();
         shipment.setOrderId(request.orderId());
-        shipment.setStatus(STATUS_PENDING);
+        String initialStatus = resolveInitialShipmentStatus(order.status());
+        OffsetDateTime initialEventDate = OffsetDateTime.now();
+        shipment.setStatus(initialStatus);
+        if (STATUS_IN_TRANSIT.equals(initialStatus)) {
+            shipment.setShippedAt(initialEventDate);
+        }
         shipment.setShippingAddress(resolveShippingAddress(request, order));
         shipment.setCarrier(trimToNull(request.carrier()));
         shipment.setTrackingNumber(trackingNumber);
 
         Shipment saved = shipmentRepository.save(shipment);
-        registerEvent(saved, STATUS_PENDING, null, "Envio creado", OffsetDateTime.now());
+        registerEvent(saved, initialStatus, null, "Envio creado", initialEventDate);
         return ShipmentResponse.from(saved);
     }
 
@@ -203,9 +209,10 @@ public class ShipmentService {
         if (order == null || order.id() == null) {
             throw new ResourceNotFoundException("Pedido no encontrado para crear envio");
         }
-        if (!ORDER_STATUS_CONFIRMED.equalsIgnoreCase(order.status())) {
+        if (!ORDER_STATUS_CONFIRMED.equalsIgnoreCase(order.status())
+                && !ORDER_STATUS_SHIPPED.equalsIgnoreCase(order.status())) {
             throw new BusinessRuleException(
-                    "Solo se puede crear envio para pedidos confirmados. Estado actual: " + order.status());
+                    "Solo se puede crear envio para pedidos confirmados o enviados. Estado actual: " + order.status());
         }
         if (trimToNull(order.shippingAddress()) == null) {
             throw new BusinessRuleException("El pedido no tiene direccion de envio");
@@ -215,6 +222,13 @@ public class ShipmentService {
     private String resolveShippingAddress(ShipmentCreateRequest request, OrderInfoResponse order) {
         String requestAddress = trimToNull(request.shippingAddress());
         return requestAddress != null ? requestAddress : order.shippingAddress().trim();
+    }
+
+    private String resolveInitialShipmentStatus(String orderStatus) {
+        if (ORDER_STATUS_SHIPPED.equalsIgnoreCase(orderStatus)) {
+            return STATUS_IN_TRANSIT;
+        }
+        return STATUS_PENDING;
     }
 
     private void registerEvent(

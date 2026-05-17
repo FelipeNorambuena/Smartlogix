@@ -67,8 +67,8 @@ public class OrderService {
             String requestedStatus,
             int page,
             int size) {
-        // CLIENTE solo consulta sus pedidos; ADMIN/OPERADOR_PEDIDOS puede filtrar por cliente.
-        UUID effectiveCustomerId = userContext.canManageOrders()
+        // CLIENTE solo consulta sus pedidos; roles operativos pueden consultar pedidos para su modulo.
+        UUID effectiveCustomerId = userContext.canReadOperationalOrders()
                 ? requestedCustomerId
                 : userContext.userId();
         OrderStatus status = normalizeStatusOrNull(requestedStatus);
@@ -93,7 +93,7 @@ public class OrderService {
             UUID customerId,
             int page,
             int size) {
-        if (!userContext.canManageOrders() && !userContext.owns(customerId)) {
+        if (!userContext.canReadOperationalOrders() && !userContext.owns(customerId)) {
             throw new ForbiddenException("No puedes consultar pedidos de otro cliente");
         }
 
@@ -243,7 +243,7 @@ public class OrderService {
     }
 
     private void validateCanRead(UserContext userContext, Order order) {
-        if (!userContext.canManageOrders() && !userContext.owns(order.getCustomerId())) {
+        if (!userContext.canReadOperationalOrders() && !userContext.owns(order.getCustomerId())) {
             throw new ForbiddenException("No puedes consultar pedidos de otro cliente");
         }
     }

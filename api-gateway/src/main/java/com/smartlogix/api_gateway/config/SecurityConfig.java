@@ -34,10 +34,18 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/auth/register",
+                                "/auth/login",
+                                "/auth/password-reset").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/inventory/products", "/inventory/products/**")
+                                .hasAnyRole("ADMIN", "OPERADOR_INVENTARIO", "CLIENTE")
                         .requestMatchers("/inventory", "/inventory/**").hasAnyRole("ADMIN", "OPERADOR_INVENTARIO")
+                        .requestMatchers(HttpMethod.GET, "/orders", "/orders/**")
+                                .hasAnyRole("ADMIN", "OPERADOR_PEDIDOS", "OPERADOR_ENVIOS", "CLIENTE")
                         .requestMatchers("/orders", "/orders/**").hasAnyRole("ADMIN", "OPERADOR_PEDIDOS", "CLIENTE")
                         .requestMatchers("/shipping", "/shipping/**").hasAnyRole("ADMIN", "OPERADOR_ENVIOS")
                         .anyRequest().authenticated())

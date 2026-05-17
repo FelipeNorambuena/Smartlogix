@@ -1,8 +1,10 @@
 import { useAuthSession } from '../hooks/useAuthSession'
 import '../styles/auth-page.css'
 import AdminDashboard from '../../admin/components/AdminDashboard'
+import CustomerDashboard from '../../customer/components/CustomerDashboard'
 import InventoryOperatorDashboard from '../../inventoryOperator/components/InventoryOperatorDashboard'
 import OrdersOperatorDashboard from '../../ordersOperator/components/OrdersOperatorDashboard'
+import ShippingOperatorDashboard from '../../shippingOperator/components/ShippingOperatorDashboard'
 import BrandPanel from './BrandPanel'
 import LoginForm from './LoginForm'
 import SessionCard from './SessionCard'
@@ -16,6 +18,8 @@ function LoginPage() {
   const isAdmin = authSession.roles.includes('ADMIN')
   const isInventoryOperator = authSession.roles.includes('OPERADOR_INVENTARIO')
   const isOrdersOperator = authSession.roles.includes('OPERADOR_PEDIDOS')
+  const isShippingOperator = authSession.roles.includes('OPERADOR_ENVIOS')
+  const isCustomer = authSession.roles.includes('CLIENTE')
 
   if (authSession.session && isAdmin) {
     return <AdminDashboard authSession={authSession} />
@@ -25,8 +29,16 @@ function LoginPage() {
     return <OrdersOperatorDashboard authSession={authSession} />
   }
 
+  if (authSession.session && isShippingOperator) {
+    return <ShippingOperatorDashboard authSession={authSession} />
+  }
+
   if (authSession.session && isInventoryOperator) {
     return <InventoryOperatorDashboard authSession={authSession} />
+  }
+
+  if (authSession.session && isCustomer) {
+    return <CustomerDashboard authSession={authSession} />
   }
 
   return (
@@ -49,13 +61,22 @@ function LoginPage() {
               />
             ) : (
               <LoginForm
+                authMode={authSession.authMode}
                 errorMessage={authSession.errorMessage}
                 isSubmitting={authSession.isSubmitting}
                 loginForm={authSession.loginForm}
                 onInputChange={authSession.handleInputChange}
+                onPasswordResetInputChange={authSession.handlePasswordResetInputChange}
+                onPasswordResetSubmit={authSession.handlePasswordResetSubmit}
+                onShowLogin={authSession.showLoginForm}
+                onShowPasswordReset={authSession.showPasswordResetForm}
                 onSubmit={authSession.handleLoginSubmit}
                 onTogglePassword={authSession.togglePasswordVisibility}
+                onToggleResetPassword={authSession.toggleResetPasswordVisibility}
+                passwordResetForm={authSession.passwordResetForm}
                 showPassword={authSession.showPassword}
+                showResetPassword={authSession.showResetPassword}
+                successMessage={authSession.successMessage}
               />
             )}
           </div>

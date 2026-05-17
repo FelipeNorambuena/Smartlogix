@@ -7,7 +7,6 @@ import ShippingSection from '../../shipping/components/ShippingSection'
 import { ADMIN_SECTIONS } from '../constants/adminSections'
 import '../styles/admin-dashboard.css'
 import AdminHome from './AdminHome'
-import ModulePlaceholder from './ModulePlaceholder'
 
 /*
  * Dashboard para usuarios ADMIN.

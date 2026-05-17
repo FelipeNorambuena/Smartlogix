@@ -28,6 +28,10 @@ export function fetchShipmentByTrackingNumber({ trackingNumber, token }) {
   return apiRequest(`/shipping/tracking/${trackingNumber}`, { token })
 }
 
+export function fetchShipmentEvents({ shipmentId, token }) {
+  return apiRequest(`/shipping/${shipmentId}/events`, { token })
+}
+
 export function createShipment({ shipment, token }) {
   return apiRequest('/shipping', {
     method: 'POST',
@@ -36,10 +40,25 @@ export function createShipment({ shipment, token }) {
   })
 }
 
-export function updateShipmentStatus({ shipmentId, status, operationDetails, token }) {
+export function updateShipment({ shipmentId, shipment, token }) {
+  return apiRequest(`/shipping/${shipmentId}`, {
+    method: 'PUT',
+    body: shipment,
+    token,
+  })
+}
+
+export function updateShipmentStatus({
+  description,
+  location,
+  occurredAt,
+  shipmentId,
+  status,
+  token,
+}) {
   return apiRequest(`/shipping/${shipmentId}/status`, {
     method: 'PATCH',
-    body: { status, operationDetails },
+    body: { description, location, occurredAt, status },
     token,
   })
 }

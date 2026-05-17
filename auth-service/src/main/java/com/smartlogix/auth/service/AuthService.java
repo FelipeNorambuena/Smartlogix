@@ -3,10 +3,13 @@ package com.smartlogix.auth.service;
 import com.smartlogix.auth.dto.AuthResponse;
 import com.smartlogix.auth.dto.JwtToken;
 import com.smartlogix.auth.dto.LoginRequest;
+import com.smartlogix.auth.dto.PasswordResetRequest;
+import com.smartlogix.auth.dto.PasswordResetResponse;
 import com.smartlogix.auth.dto.RegisterRequest;
 import com.smartlogix.auth.dto.UserResponse;
 import com.smartlogix.auth.exception.BusinessRuleException;
 import com.smartlogix.auth.exception.InvalidCredentialsException;
+import com.smartlogix.auth.exception.ResourceNotFoundException;
 import com.smartlogix.auth.exception.UserDisabledException;
 import com.smartlogix.auth.model.User;
 import com.smartlogix.auth.repository.UserRepository;
@@ -74,6 +77,18 @@ public class AuthService {
 
         JwtToken token = jwtService.createToken(user);
         return AuthResponse.bearer(token.value(), token.expiresAt(), UserResponse.from(user));
+    }
+
+    public PasswordResetResponse resetPassword(PasswordResetRequest request) {
+        String email = normalizeEmail(request.email());
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email " + email));
+
+        // Nunca se guarda la clave en texto plano; Spring Security genera hash BCrypt.
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        return new PasswordResetResponse("Clave actualizada correctamente. Ya puedes iniciar sesion.");
     }
 
     @Transactional(readOnly = true)
