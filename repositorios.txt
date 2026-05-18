@@ -1,0 +1,41 @@
+Repositorio principal del proyecto:
+https://github.com/FelipeNorambuena/Smartlogix.git
+
+Componentes versionados dentro del repositorio principal:
+
+1. Frontend React
+   Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/smartlogix-frontend/Front-Smartlogix
+   Contenido: aplicacion React + Vite, package.json, dependencias NPM, assets publicos y codigo fuente organizado por features.
+
+2. API Gateway / entrada BFF para frontend
+   Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/api-gateway
+   Contenido: Spring Cloud Gateway WebMVC, configuracion JWT, CORS y rutas hacia microservicios.
+
+3. Auth service
+   Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/auth-service
+   Contenido: registro, login, usuarios, roles, JWT, migraciones Flyway y seguridad.
+
+4. Inventario service
+   Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/inventario
+   Contenido: productos, inventario, stock, disponibilidad, Factory Method para SKU, Flyway y API key interna.
+
+5. Pedidos service
+   Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/pedidos
+   Contenido: pedidos, items, estados, integracion con inventario y auth-service, Circuit Breaker y Flyway.
+
+6. Envios service
+   Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/envios
+   Contenido: envios, tracking, eventos, integracion con pedidos, Circuit Breaker y Flyway.
+
+Repositorios individuales pendientes de confirmar si se separan del monorepo:
+
+- Frontend: pendiente si se separa del monorepo.
+- API Gateway/BFF: pendiente si se separa del monorepo.
+- Auth service: pendiente si se separa del monorepo.
+- Inventario service: pendiente si se separa del monorepo.
+- Pedidos service: pendiente si se separa del monorepo.
+- Envios service: pendiente si se separa del monorepo.
+
+Arquetipo Maven:
+
+- No se publicara como repositorio separado. Se documenta Spring Boot Maven como arquetipo base para los componentes backend.
