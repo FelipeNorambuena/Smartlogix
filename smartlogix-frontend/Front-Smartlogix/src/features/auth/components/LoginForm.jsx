@@ -5,14 +5,95 @@ import '../styles/login-form.css'
  * La logica se recibe desde useAuthSession para mantener la UI desacoplada.
  */
 function LoginForm({
+  authMode,
   errorMessage,
   isSubmitting,
   loginForm,
   onInputChange,
+  onPasswordResetInputChange,
+  onPasswordResetSubmit,
+  onShowLogin,
+  onShowPasswordReset,
   onSubmit,
   onTogglePassword,
+  onToggleResetPassword,
+  passwordResetForm,
   showPassword,
+  showResetPassword,
+  successMessage,
 }) {
+  if (authMode === 'password-reset') {
+    return (
+      <>
+        <div className="auth-heading">
+          <h2>Recuperar contrase&ntilde;a</h2>
+        </div>
+
+        <form className="login-form" onSubmit={onPasswordResetSubmit}>
+          <div className="field-group">
+            <label htmlFor="reset-email">Correo electr&oacute;nico</label>
+            <input
+              autoComplete="email"
+              id="reset-email"
+              name="email"
+              onChange={onPasswordResetInputChange}
+              placeholder="usuario@smartlogix.cl"
+              type="email"
+              value={passwordResetForm.email}
+            />
+          </div>
+
+          <div className="field-group">
+            <label htmlFor="newPassword">Nueva contrase&ntilde;a</label>
+            <div className="password-field">
+              <input
+                autoComplete="new-password"
+                id="newPassword"
+                name="newPassword"
+                onChange={onPasswordResetInputChange}
+                placeholder="Minimo 8 caracteres"
+                type={showResetPassword ? 'text' : 'password'}
+                value={passwordResetForm.newPassword}
+              />
+              <button
+                aria-label={
+                  showResetPassword
+                    ? 'Ocultar contrase\u00f1a'
+                    : 'Mostrar contrase\u00f1a'
+                }
+                className="text-button"
+                onClick={onToggleResetPassword}
+                type="button"
+              >
+                {showResetPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+          </div>
+
+          {errorMessage ? (
+            <p className="error-message" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          {successMessage ? (
+            <p className="success-message" role="status">
+              {successMessage}
+            </p>
+          ) : null}
+
+          <button className="primary-button" disabled={isSubmitting} type="submit">
+            {isSubmitting ? 'Actualizando...' : 'Actualizar clave'}
+          </button>
+
+          <button className="auth-switch-button" onClick={onShowLogin} type="button">
+            Volver al inicio de sesi&oacute;n
+          </button>
+        </form>
+      </>
+    )
+  }
+
   return (
     <>
       <div className="auth-heading">
@@ -78,8 +159,18 @@ function LoginForm({
           </p>
         ) : null}
 
+        {successMessage ? (
+          <p className="success-message" role="status">
+            {successMessage}
+          </p>
+        ) : null}
+
         <button className="primary-button" disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Validando...' : 'Entrar'}
+        </button>
+
+        <button className="auth-switch-button" onClick={onShowPasswordReset} type="button">
+          Olvid&eacute; mi contrase&ntilde;a
         </button>
       </form>
     </>

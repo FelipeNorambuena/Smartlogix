@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
-import { loginUser } from '../../../services/authService'
-import { INITIAL_LOGIN_FORM } from '../constants/authConstants'
+import { loginUser, resetPassword } from '../../../services/authService'
+import {
+  INITIAL_LOGIN_FORM,
+  INITIAL_PASSWORD_RESET_FORM,
+} from '../constants/authConstants'
 import {
   clearStoredSession,
   loadStoredSession,
@@ -13,10 +16,14 @@ import {
  */
 export function useAuthSession() {
   const [loginForm, setLoginForm] = useState(INITIAL_LOGIN_FORM)
+  const [passwordResetForm, setPasswordResetForm] = useState(INITIAL_PASSWORD_RESET_FORM)
+  const [authMode, setAuthMode] = useState('login')
   const [session, setSession] = useState(loadStoredSession)
   const [showPassword, setShowPassword] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Nombre visible: privilegia nombre/apellido y usa el email como respaldo.
   const userDisplayName = useMemo(() => {
@@ -55,6 +62,15 @@ export function useAuthSession() {
     }))
   }
 
+  function handlePasswordResetInputChange(event) {
+    const { name, value } = event.target
+
+    setPasswordResetForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
   async function handleLoginSubmit(event) {
     event.preventDefault()
 
@@ -62,11 +78,13 @@ export function useAuthSession() {
     const validationMessage = validateLoginForm(loginForm)
     if (validationMessage) {
       setErrorMessage(validationMessage)
+      setSuccessMessage('')
       return
     }
 
     setIsSubmitting(true)
     setErrorMessage('')
+    setSuccessMessage('')
 
     try {
       // El servicio HTTP mantiene el contrato con auth-service aislado de la UI.
@@ -89,6 +107,41 @@ export function useAuthSession() {
     }
   }
 
+  async function handlePasswordResetSubmit(event) {
+    event.preventDefault()
+
+    const validationMessage = validatePasswordResetForm(passwordResetForm)
+    if (validationMessage) {
+      setErrorMessage(validationMessage)
+      setSuccessMessage('')
+      return
+    }
+
+    setIsSubmitting(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    try {
+      const response = await resetPassword({
+        email: passwordResetForm.email.trim(),
+        newPassword: passwordResetForm.newPassword,
+      })
+      setSuccessMessage(response?.message || 'Clave actualizada correctamente.')
+      setLoginForm((currentForm) => ({
+        ...currentForm,
+        email: passwordResetForm.email.trim(),
+        password: '',
+      }))
+      setPasswordResetForm(INITIAL_PASSWORD_RESET_FORM)
+      setAuthMode('login')
+      setShowResetPassword(false)
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   function handleLogout() {
     clearStoredSession()
     setSession(null)
@@ -98,16 +151,46 @@ export function useAuthSession() {
     setShowPassword((currentValue) => !currentValue)
   }
 
+  function toggleResetPasswordVisibility() {
+    setShowResetPassword((currentValue) => !currentValue)
+  }
+
+  function showPasswordResetForm() {
+    setAuthMode('password-reset')
+    setErrorMessage('')
+    setSuccessMessage('')
+    setPasswordResetForm((currentForm) => ({
+      ...currentForm,
+      email: currentForm.email || loginForm.email,
+    }))
+  }
+
+  function showLoginForm() {
+    setAuthMode('login')
+    setErrorMessage('')
+    setSuccessMessage('')
+    setShowResetPassword(false)
+  }
+
   return {
+    authMode,
     errorMessage,
     handleInputChange,
     handleLoginSubmit,
     handleLogout,
+    handlePasswordResetInputChange,
+    handlePasswordResetSubmit,
     isSubmitting,
     loginForm,
+    passwordResetForm,
     roles,
     session,
+    showLoginForm,
     showPassword,
+    showPasswordResetForm,
+    showResetPassword,
+    successMessage,
+    toggleResetPasswordVisibility,
     togglePasswordVisibility,
     userDisplayName,
     userInitials,
@@ -126,6 +209,26 @@ function validateLoginForm(loginForm) {
 
   if (!loginForm.password) {
     return 'Ingresa la contrase\u00f1a.'
+  }
+
+  return ''
+}
+
+function validatePasswordResetForm(form) {
+  if (!form.email.trim()) {
+    return 'Ingresa el correo del usuario.'
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    return 'Ingresa un correo valido.'
+  }
+
+  if (!form.newPassword) {
+    return 'Ingresa la nueva contrasena.'
+  }
+
+  if (form.newPassword.length < 8) {
+    return 'La nueva contrasena debe tener al menos 8 caracteres.'
   }
 
   return ''

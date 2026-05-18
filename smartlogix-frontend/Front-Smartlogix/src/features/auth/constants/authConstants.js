@@ -10,6 +10,11 @@ export const INITIAL_LOGIN_FORM = {
   rememberSession: true,
 }
 
+export const INITIAL_PASSWORD_RESET_FORM = {
+  email: '',
+  newPassword: '',
+}
+
 export const OPERATION_MODULES = [
   { label: 'Inventario', value: 'Stock actualizado', tone: 'green' },
   { label: 'Pedidos', value: 'Validaci\u00f3n lista', tone: 'blue' },

@@ -11,3 +11,10 @@ export async function loginUser(credentials) {
     body: credentials,
   })
 }
+
+export async function resetPassword(passwordReset) {
+  return apiRequest('/auth/password-reset', {
+    method: 'POST',
+    body: passwordReset,
+  })
+}

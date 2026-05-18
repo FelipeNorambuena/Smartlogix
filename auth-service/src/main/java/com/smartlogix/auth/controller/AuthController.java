@@ -2,6 +2,8 @@ package com.smartlogix.auth.controller;
 
 import com.smartlogix.auth.dto.AuthResponse;
 import com.smartlogix.auth.dto.LoginRequest;
+import com.smartlogix.auth.dto.PasswordResetRequest;
+import com.smartlogix.auth.dto.PasswordResetResponse;
 import com.smartlogix.auth.dto.RegisterRequest;
 import com.smartlogix.auth.dto.UserResponse;
 import com.smartlogix.auth.service.AuthService;
@@ -41,6 +43,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/password-reset")
+    public PasswordResetResponse resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+        return authService.resetPassword(request);
     }
 
     @GetMapping("/me")
