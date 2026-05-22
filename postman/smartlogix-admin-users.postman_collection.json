@@ -1,0 +1,554 @@
+{
+  "info": {
+    "name": "SmartLogix - Admin Users",
+    "description": "Coleccion enfocada en endpoints administrativos de usuarios. Usa el API Gateway por defecto en http://localhost:8080. Ejecuta primero Login ADMIN para guardar el JWT en la variable adminToken.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "00 - Health",
+      "item": [
+        {
+          "name": "Gateway health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gateway responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Autenticacion ADMIN",
+      "item": [
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login ADMIN responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('La respuesta incluye token JWT', function () {",
+                  "  pm.expect(response.token).to.be.a('string').and.not.empty;",
+                  "  pm.expect(response.tokenType).to.eql('Bearer');",
+                  "});",
+                  "",
+                  "pm.test('El usuario autenticado tiene rol ADMIN', function () {",
+                  "  pm.expect(response.user.roles).to.include('ADMIN');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('adminToken', response.token);",
+                  "pm.collectionVariables.set('adminUserId', response.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Perfil actual ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Perfil responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('El perfil actual conserva rol ADMIN', function () {",
+                  "  pm.expect(response.roles).to.include('ADMIN');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('adminUserId', response.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Usuarios ADMIN",
+      "item": [
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listar usuarios responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('La respuesta es un arreglo', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear usuario operador inventario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('createUserEmail', `operador.inventario.${Date.now()}@smartlogix.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Crear usuario responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('El usuario creado tiene rol OPERADOR_INVENTARIO', function () {",
+                  "  pm.expect(response.email).to.eql(pm.collectionVariables.get('createUserEmail'));",
+                  "  pm.expect(response.roles).to.include('OPERADOR_INVENTARIO');",
+                  "  pm.expect(response.enabled).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('targetUserId', response.id);",
+                  "pm.collectionVariables.set('targetUserEmail', response.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{createUserEmail}}\",\n  \"password\": \"{{operatorPassword}}\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Inventario\",\n  \"roles\": [\"OPERADOR_INVENTARIO\"],\n  \"enabled\": true\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Buscar usuario creado por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{targetUserId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Buscar usuario responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('El ID coincide con targetUserId', function () {",
+                  "  pm.expect(response.id).to.eql(pm.collectionVariables.get('targetUserId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar datos basicos de usuario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('updatedUserEmail', `operador.actualizado.${Date.now()}@smartlogix.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Actualizar usuario responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('Datos basicos actualizados', function () {",
+                  "  pm.expect(response.email).to.eql(pm.collectionVariables.get('updatedUserEmail'));",
+                  "  pm.expect(response.firstName).to.eql('Operador');",
+                  "  pm.expect(response.lastName).to.eql('Actualizado');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('targetUserEmail', response.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{updatedUserEmail}}\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Actualizado\"\n}"
+            },
+            "url": "{{baseUrl}}/users/{{targetUserId}}"
+          }
+        },
+        {
+          "name": "Actualizar roles a OPERADOR_PEDIDOS",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roles\": [\"OPERADOR_PEDIDOS\"]\n}"
+            },
+            "url": "{{baseUrl}}/users/{{targetUserId}}/roles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Actualizar roles responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('El usuario queda con rol OPERADOR_PEDIDOS', function () {",
+                  "  pm.expect(response.roles).to.include('OPERADOR_PEDIDOS');",
+                  "  pm.expect(response.roles).to.not.include('OPERADOR_INVENTARIO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Desactivar usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": false\n}"
+            },
+            "url": "{{baseUrl}}/users/{{targetUserId}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Desactivar usuario responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('El usuario queda desactivado', function () {",
+                  "  pm.expect(pm.response.json().enabled).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Activar usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}"
+            },
+            "url": "{{baseUrl}}/users/{{targetUserId}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Activar usuario responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('El usuario queda activo', function () {",
+                  "  pm.expect(pm.response.json().enabled).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Validaciones de seguridad",
+      "item": [
+        {
+          "name": "Listar usuarios sin token debe fallar",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sin JWT responde 401 o 403', function () {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar CLIENTE para prueba de permisos",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clientEmail}}\",\n  \"password\": \"{{clientPassword}}\",\n  \"firstName\": \"Cliente\",\n  \"lastName\": \"Permisos\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('clientEmail', `cliente.permisos.${Date.now()}@smartlogix.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Registro CLIENTE responde 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "",
+                  "pm.test('El usuario temporal tiene rol CLIENTE', function () {",
+                  "  pm.expect(response.user.roles).to.include('CLIENTE');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('clientToken', response.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar usuarios con CLIENTE debe fallar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CLIENTE no puede acceder a /users', function () {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@smartlogix.com"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin12345"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "adminUserId",
+      "value": ""
+    },
+    {
+      "key": "targetUserId",
+      "value": ""
+    },
+    {
+      "key": "targetUserEmail",
+      "value": ""
+    },
+    {
+      "key": "createUserEmail",
+      "value": ""
+    },
+    {
+      "key": "updatedUserEmail",
+      "value": ""
+    },
+    {
+      "key": "operatorPassword",
+      "value": "Operador12345"
+    },
+    {
+      "key": "clientEmail",
+      "value": "cliente@smartlogix.com"
+    },
+    {
+      "key": "clientPassword",
+      "value": "Cliente12345"
+    },
+    {
+      "key": "clientToken",
+      "value": ""
+    }
+  ]
+}
