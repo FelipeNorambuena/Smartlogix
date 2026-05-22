@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "SmartLogix - API Gateway",
-    "description": "Coleccion para probar auth-service a traves del API Gateway. Usar cuando api-gateway esta levantado en http://localhost:8080.",
+    "description": "Coleccion para probar SmartLogix a traves del API Gateway local. Ejecuta primero Auth > Registrar cliente temporal y luego Auth > Login ADMIN para dejar variables listas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,22 +16,36 @@
   },
   "item": [
     {
-      "name": "Gateway Health",
-      "request": {
-        "auth": {
-          "type": "noauth"
-        },
-        "method": "GET",
-        "header": [],
-        "url": "{{gatewayUrl}}/actuator/health"
-      }
-    },
-    {
-      "name": "Auth por Gateway",
+      "name": "00 - Health",
       "item": [
         {
-          "name": "Registrar cliente",
+          "name": "Gateway health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/actuator/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth por Gateway",
+      "item": [
+        {
+          "name": "Registrar cliente temporal",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('clientEmail', `cliente.gateway.${Date.now()}@smartlogix.com`);"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -39,8 +53,8 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "  const response = pm.response.json();",
-                  "  pm.collectionVariables.set('authToken', response.token);",
-                  "  pm.collectionVariables.set('currentUserId', response.user.id);",
+                  "  pm.collectionVariables.set('clientToken', response.token);",
+                  "  pm.collectionVariables.set('clientUserId', response.user.id);",
                   "  pm.collectionVariables.set('clientEmail', response.user.email);",
                   "}"
                 ]
@@ -60,7 +74,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"cliente.gateway{{$timestamp}}@smartlogix.com\",\n  \"password\": \"Cliente12345\",\n  \"firstName\": \"Cliente\",\n  \"lastName\": \"Gateway\"\n}"
+              "raw": "{\n  \"email\": \"{{clientEmail}}\",\n  \"password\": \"{{clientPassword}}\",\n  \"firstName\": \"Cliente\",\n  \"lastName\": \"Gateway\"\n}"
             },
             "url": "{{gatewayUrl}}/auth/register"
           }
@@ -75,8 +89,8 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "  const response = pm.response.json();",
-                  "  pm.collectionVariables.set('authToken', response.token);",
-                  "  pm.collectionVariables.set('currentUserId', response.user.id);",
+                  "  pm.collectionVariables.set('clientToken', response.token);",
+                  "  pm.collectionVariables.set('clientUserId', response.user.id);",
                   "}"
                 ]
               }
@@ -112,6 +126,7 @@
                   "  const response = pm.response.json();",
                   "  pm.collectionVariables.set('authToken', response.token);",
                   "  pm.collectionVariables.set('currentUserId', response.user.id);",
+                  "  pm.collectionVariables.set('adminUserId', response.user.id);",
                   "}"
                 ]
               }
@@ -146,7 +161,7 @@
       ]
     },
     {
-      "name": "Users por Gateway - ADMIN",
+      "name": "02 - Usuarios por Gateway - ADMIN",
       "item": [
         {
           "name": "Listar usuarios",
@@ -167,6 +182,7 @@
                   "if (pm.response.code === 201) {",
                   "  const response = pm.response.json();",
                   "  pm.collectionVariables.set('targetUserId', response.id);",
+                  "  pm.collectionVariables.set('targetUserEmail', response.email);",
                   "}"
                 ]
               }
@@ -182,7 +198,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"operador.gateway{{$timestamp}}@smartlogix.com\",\n  \"password\": \"Operador12345\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Gateway\",\n  \"roles\": [\"OPERADOR_INVENTARIO\"],\n  \"enabled\": true\n}"
+              "raw": "{\n  \"email\": \"operador.inventario.gateway.{{$timestamp}}@smartlogix.com\",\n  \"password\": \"{{operatorPassword}}\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Inventario\",\n  \"roles\": [\"OPERADOR_INVENTARIO\"],\n  \"enabled\": true\n}"
             },
             "url": "{{gatewayUrl}}/users"
           }
@@ -194,11 +210,73 @@
             "header": [],
             "url": "{{gatewayUrl}}/users/{{targetUserId}}"
           }
+        },
+        {
+          "name": "Actualizar datos de usuario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('targetUserEmail', `operador.actualizado.${Date.now()}@smartlogix.com`);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{targetUserEmail}}\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Actualizado\"\n}"
+            },
+            "url": "{{gatewayUrl}}/users/{{targetUserId}}"
+          }
+        },
+        {
+          "name": "Actualizar roles de usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roles\": [\"OPERADOR_PEDIDOS\"]\n}"
+            },
+            "url": "{{gatewayUrl}}/users/{{targetUserId}}/roles"
+          }
+        },
+        {
+          "name": "Actualizar estado de usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}"
+            },
+            "url": "{{gatewayUrl}}/users/{{targetUserId}}/status"
+          }
         }
       ]
     },
     {
-      "name": "Inventario por Gateway - ADMIN u OPERADOR_INVENTARIO",
+      "name": "03 - Inventario por Gateway",
       "item": [
         {
           "name": "Listar productos",
@@ -209,19 +287,11 @@
           }
         },
         {
-          "name": "Buscar producto por ID",
+          "name": "Obtener proximo SKU",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{gatewayUrl}}/inventory/products/{{productId}}"
-          }
-        },
-        {
-          "name": "Buscar producto por SKU",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{gatewayUrl}}/inventory/products/sku/{{sku}}"
+            "url": "{{gatewayUrl}}/inventory/products/next-sku"
           }
         },
         {
@@ -254,6 +324,22 @@
               "raw": "{\n  \"sku\": \"SLX-GW-{{$timestamp}}\",\n  \"name\": \"Producto Gateway\",\n  \"description\": \"Producto creado desde API Gateway\",\n  \"unitPrice\": 12990,\n  \"category\": \"Gateway\"\n}"
             },
             "url": "{{gatewayUrl}}/inventory/products"
+          }
+        },
+        {
+          "name": "Buscar producto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Buscar producto por SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/products/sku/{{sku}}"
           }
         },
         {
@@ -293,9 +379,25 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"stockAvailable\": 20,\n  \"stockReserved\": 5,\n  \"warehouseLocation\": \"Santiago\",\n  \"reorderPoint\": 3\n}"
+              "raw": "{\n  \"stockAvailable\": 50,\n  \"stockReserved\": 0,\n  \"warehouseLocation\": \"Santiago\",\n  \"reorderPoint\": 5\n}"
             },
             "url": "{{gatewayUrl}}/inventory/{{productId}}"
+          }
+        },
+        {
+          "name": "Buscar inventario por producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/{{productId}}"
+          }
+        },
+        {
+          "name": "Consultar stock por producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/inventory/{{productId}}/stock"
           }
         },
         {
@@ -322,6 +424,338 @@
             },
             "url": "{{gatewayUrl}}/inventory/{{productId}}/reserve"
           }
+        },
+        {
+          "name": "Liberar stock reservado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/{{productId}}/release"
+          }
+        },
+        {
+          "name": "Reservar stock para confirmar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/{{productId}}/reserve"
+          }
+        },
+        {
+          "name": "Confirmar stock reservado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{quantity}}\n}"
+            },
+            "url": "{{gatewayUrl}}/inventory/{{productId}}/confirm"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Pedidos por Gateway",
+      "item": [
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/orders?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Crear pedido para cliente temporal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('orderId', response.id);",
+                  "  pm.collectionVariables.set('orderStatus', response.status);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{clientUserId}}\",\n  \"shippingAddress\": \"Av. Providencia 1234, Santiago\",\n  \"items\": [\n    {\n      \"sku\": \"{{sku}}\",\n      \"quantity\": {{quantity}}\n    }\n  ]\n}"
+            },
+            "url": "{{gatewayUrl}}/orders"
+          }
+        },
+        {
+          "name": "Buscar pedido por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "Listar pedidos por cliente temporal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/orders/customer/{{clientUserId}}?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Actualizar estado de pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"{{orderNextStatus}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/orders/{{orderId}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Envios por Gateway",
+      "item": [
+        {
+          "name": "Listar envios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/shipping?page={{page}}&size={{size}}"
+          }
+        },
+        {
+          "name": "Crear envio para pedido",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('trackingNumber', `SLX-TRACK-${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const response = pm.response.json();",
+                  "  pm.collectionVariables.set('shipmentId', response.id);",
+                  "  pm.collectionVariables.set('trackingNumber', response.trackingNumber);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"shippingAddress\": \"Av. Providencia 1234, Santiago\",\n  \"carrier\": \"Chilexpress\",\n  \"trackingNumber\": \"{{trackingNumber}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/shipping"
+          }
+        },
+        {
+          "name": "Buscar envio por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/shipping/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "Buscar envio por pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/shipping/order/{{orderId}}"
+          }
+        },
+        {
+          "name": "Buscar envio por tracking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/shipping/tracking/{{trackingNumber}}"
+          }
+        },
+        {
+          "name": "Actualizar datos de envio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddress\": \"Av. Providencia 4321, Santiago\",\n  \"carrier\": \"Starken\",\n  \"trackingNumber\": \"{{trackingNumber}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/shipping/{{shipmentId}}"
+          }
+        },
+        {
+          "name": "Actualizar estado de envio",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"{{shipmentNextStatus}}\",\n  \"location\": \"Centro de distribucion Santiago\",\n  \"description\": \"Envio actualizado desde Postman\"\n}"
+            },
+            "url": "{{gatewayUrl}}/shipping/{{shipmentId}}/status"
+          }
+        },
+        {
+          "name": "Listar eventos de envio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/shipping/{{shipmentId}}/events"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Validaciones de seguridad",
+      "item": [
+        {
+          "name": "Users sin token debe fallar",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/users"
+          }
+        },
+        {
+          "name": "Users con CLIENTE debe fallar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Swagger/OpenAPI directo por servicio",
+      "item": [
+        {
+          "name": "Auth OpenAPI JSON",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{authServiceUrl}}/v3/api-docs"
+          }
+        },
+        {
+          "name": "Inventario OpenAPI JSON",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{inventoryServiceUrl}}/v3/api-docs"
+          }
+        },
+        {
+          "name": "Pedidos OpenAPI JSON",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{ordersServiceUrl}}/v3/api-docs"
+          }
+        },
+        {
+          "name": "Envios OpenAPI JSON",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{shippingServiceUrl}}/v3/api-docs"
+          }
         }
       ]
     }
@@ -332,7 +766,31 @@
       "value": "http://localhost:8080"
     },
     {
+      "key": "authServiceUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "inventoryServiceUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "ordersServiceUrl",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "shippingServiceUrl",
+      "value": "http://localhost:8083"
+    },
+    {
       "key": "authToken",
+      "value": ""
+    },
+    {
+      "key": "clientToken",
+      "value": ""
+    },
+    {
+      "key": "adminUserId",
       "value": ""
     },
     {
@@ -340,12 +798,20 @@
       "value": ""
     },
     {
+      "key": "clientUserId",
+      "value": ""
+    },
+    {
       "key": "targetUserId",
       "value": ""
     },
     {
+      "key": "targetUserEmail",
+      "value": ""
+    },
+    {
       "key": "clientEmail",
-      "value": "cliente@smartlogix.com"
+      "value": "cliente.gateway@smartlogix.com"
     },
     {
       "key": "clientPassword",
@@ -360,6 +826,10 @@
       "value": "Admin12345"
     },
     {
+      "key": "operatorPassword",
+      "value": "Operador12345"
+    },
+    {
       "key": "productId",
       "value": "00000000-0000-0000-0000-000000000000"
     },
@@ -369,7 +839,31 @@
     },
     {
       "key": "quantity",
-      "value": "4"
+      "value": "2"
+    },
+    {
+      "key": "orderId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "orderStatus",
+      "value": ""
+    },
+    {
+      "key": "orderNextStatus",
+      "value": "SHIPPED"
+    },
+    {
+      "key": "shipmentId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "trackingNumber",
+      "value": "SLX-TRACK"
+    },
+    {
+      "key": "shipmentNextStatus",
+      "value": "delivered"
     },
     {
       "key": "page",
