@@ -378,11 +378,3 @@ https://github.com/FelipeNorambuena/Smartlogix.git
 
 El archivo `repositorios.txt` registra el repositorio principal y los enlaces por componente dentro del monorepo. Si el equipo decide separar frontend, BFF o microservicios en repositorios individuales, se deben reemplazar los valores pendientes por las URLs finales de GitHub.
 
-## Informacion pendiente para completar el informe PDF
-
-Para cerrar el documento final se recomienda confirmar:
-
-- Enlaces individuales si cada componente sera publicado en repositorios separados.
-- Capturas y resultados de las pruebas realizadas desde frontend.
-- Evidencia complementaria de Postman si se requiere validar rutas especificas.
-- Resultado final de Pull Requests o merges hacia `main`.
