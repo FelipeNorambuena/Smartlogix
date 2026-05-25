@@ -378,4 +378,3 @@ https://github.com/FelipeNorambuena/Smartlogix.git
 
 El archivo `repositorios.txt` registra el repositorio principal y los enlaces por componente dentro del monorepo. Si el equipo decide separar frontend, BFF o microservicios en repositorios individuales, se deben reemplazar los valores pendientes por las URLs finales de GitHub.
 
-## oli
