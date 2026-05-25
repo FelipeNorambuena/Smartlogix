@@ -27,15 +27,4 @@ Componentes versionados dentro del repositorio principal:
    Enlace: https://github.com/FelipeNorambuena/Smartlogix/tree/main/envios
    Contenido: envios, tracking, eventos, integracion con pedidos, Circuit Breaker y Flyway.
 
-Repositorios individuales pendientes de confirmar si se separan del monorepo:
 
-- Frontend: pendiente si se separa del monorepo.
-- API Gateway/BFF: pendiente si se separa del monorepo.
-- Auth service: pendiente si se separa del monorepo.
-- Inventario service: pendiente si se separa del monorepo.
-- Pedidos service: pendiente si se separa del monorepo.
-- Envios service: pendiente si se separa del monorepo.
-
-Arquetipo Maven:
-
-- No se publicara como repositorio separado. Se documenta Spring Boot Maven como arquetipo base para los componentes backend.
