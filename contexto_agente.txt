@@ -1,0 +1,289 @@
+Actúa como asistente técnico para el proyecto SmartLogix.
+
+Contexto del proyecto:
+SmartLogix es una plataforma inteligente para la gestión logística de eCommerce, orientada a PYMEs. El sistema busca mejorar la gestión de inventario, pedidos, envíos y usuarios, reemplazando procesos manuales o sistemas monolíticos por una arquitectura moderna basada en microservicios.
+
+Arquitectura general:
+- Frontend: React.
+- Backend: Spring Boot.
+- API Gateway: Spring Cloud Gateway.
+- Base de datos: mysql
+- Persistencia: Spring Data JPA.
+- Seguridad: JWT + Spring Security.
+- Resiliencia: Resilience4j con Circuit Breaker.
+
+Microservicios principales:
+1. auth-service:
+   - Registro de usuarios.
+   - Login.
+   - Generación de JWT.
+   - Gestión de roles.
+   - Gestión de permisos.
+   - Validación de credenciales.
+   - Base de datos propia.
+   - No debe manejar inventario, pedidos ni envíos.
+
+2. inventario:
+   - Gestión de productos.
+   - Control de stock.
+   - Movimientos de inventario.
+   - Consulta de disponibilidad.
+   - Base de datos propia.
+   - No debe manejar usuarios, login, pedidos ni envíos.
+
+3. pedidos:
+   - Creación de pedidos.
+   - Validación de pedidos.
+   - Consulta de stock en inventory-service.
+   - Gestión de estados del pedido.
+   - Trazabilidad de órdenes.
+   - Base de datos propia.
+   - No debe manejar usuarios, login, inventario interno ni envíos.
+
+4. envios:
+   - Coordinación de despachos.
+   - Planificación de rutas.
+   - Seguimiento de entregas.
+   - Integración futura con transportistas.
+   - Base de datos propia.
+   - No debe manejar usuarios, login, inventario ni pedidos completos.
+
+Flujo general:
+1. El usuario accede desde React.
+2. React envía solicitudes al API Gateway.
+3. Para login o registro, el API Gateway redirige al auth-service.
+4. El auth-service valida credenciales y genera un JWT.
+5. React guarda el token y lo envía en cada solicitud usando:
+   Authorization: Bearer TOKEN
+6. El API Gateway valida el token y controla acceso a rutas.
+7. Los microservicios también pueden validar roles cuando sea necesario.
+8. Los servicios se comunican entre sí solo cuando corresponde y usando DTOs.
+
+Roles sugeridos:
+- ADMIN
+- OPERADOR_INVENTARIO
+- OPERADOR_PEDIDOS
+- OPERADOR_ENVIOS
+- CLIENTE
+
+Permisos sugeridos:
+- ADMIN:
+  - Puede acceder a todos los módulos.
+  - Puede administrar usuarios, productos, pedidos y envíos.
+
+- OPERADOR_INVENTARIO:
+  - Puede crear, editar y consultar productos.
+  - Puede modificar stock.
+  - Puede registrar movimientos de inventario.
+  - No puede administrar usuarios ni envíos.
+
+- OPERADOR_PEDIDOS:
+  - Puede crear, consultar y actualizar pedidos.
+  - Puede validar pedidos.
+  - Puede consultar disponibilidad de stock.
+  - No puede administrar usuarios ni modificar stock directamente.
+
+- OPERADOR_ENVIOS:
+  - Puede coordinar despachos.
+  - Puede actualizar estados de envío.
+  - Puede consultar pedidos listos para despacho.
+  - No puede administrar usuarios ni modificar pedidos completos.
+
+- CLIENTE:
+  - Puede crear pedidos.
+  - Puede consultar el estado de sus pedidos.
+  - Puede ver información básica relacionada con sus compras.
+  - No puede acceder a funciones administrativas.
+
+Rutas sugeridas según rol:
+- /auth/**:
+  - Público para login y registro.
+  - Protegido para administración de usuarios.
+
+- /users/**:
+  - ADMIN.
+
+- /inventory/**:
+  - ADMIN.
+  - OPERADOR_INVENTARIO.
+
+- /orders/**:
+  - ADMIN.
+  - OPERADOR_PEDIDOS.
+  - CLIENTE, solo para sus propios pedidos.
+
+- /shipping/**:
+  - ADMIN.
+  - OPERADOR_ENVIOS.
+
+JWT:
+El token debe contener como mínimo:
+- userId
+- email
+- roles
+- issuedAt
+- expiration
+
+Patrones obligatorios:
+- Microservices Architecture.
+- API Gateway.
+- Database per Service.
+- Repository Pattern.
+- Factory Method cuando existan reglas variables.
+- Circuit Breaker para llamadas entre servicios o integraciones externas.
+
+Reglas de arquitectura:
+- Cada microservicio debe ser independiente.
+- No compartir base de datos entre servicios.
+- No acceder directamente a tablas de otro microservicio.
+- No duplicar lógica de autenticación en todos los servicios.
+- El auth-service es el único responsable de usuarios, roles, login y JWT.
+- El API Gateway debe centralizar validación inicial del token y control de rutas.
+- Los microservicios pueden hacer validación adicional de roles usando Spring Security.
+- Toda comunicación externa del frontend debe pasar por API Gateway.
+- Usar DTOs para entrada y salida.
+- No exponer entidades directamente en los controladores.
+- Separar responsabilidades por capas.
+- Validar datos de entrada.
+- Manejar errores con respuestas claras.
+- Mantener código simple, mantenible y documentado.
+- Evitar lógica de negocio en controladores.
+- Implementar endpoints REST claros.
+
+Estructura esperada por microservicio:
+src/main/java/com/smartlogix/{servicio}/
+- controller/
+- service/
+- repository/
+- model/
+- dto/
+- config/
+- exception/
+- security/
+- factory/ si aplica
+
+Estructura sugerida para auth-service:
+src/main/java/com/smartlogix/auth/
+- controller/
+  - AuthController
+  - UserController
+- service/
+  - AuthService
+  - UserService
+  - JwtService
+- repository/
+  - UserRepository
+  - RoleRepository
+- model/
+  - User
+  - Role
+- dto/
+  - LoginRequest
+  - RegisterRequest
+  - AuthResponse
+  - UserResponse
+- config/
+  - SecurityConfig
+- security/
+  - JwtAuthenticationFilter
+  - JwtTokenProvider
+- exception/
+
+Endpoints sugeridos para auth-service:
+- POST /auth/register
+- POST /auth/login
+- GET /auth/me
+- GET /users
+- GET /users/{id}
+- POST /users
+- PUT /users/{id}
+- PATCH /users/{id}/roles
+- PATCH /users/{id}/status
+
+Endpoints sugeridos para inventory-service:
+- GET /inventory/products
+- GET /inventory/products/{id}
+- POST /inventory/products
+- PUT /inventory/products/{id}
+- PATCH /inventory/products/{id}/stock
+- GET /inventory/products/{id}/availability
+
+Endpoints sugeridos para orders-service:
+- GET /orders
+- GET /orders/{id}
+- POST /orders
+- PATCH /orders/{id}/status
+- GET /orders/customer/{customerId}
+
+Endpoints sugeridos para shipping-service:
+- GET /shipping
+- GET /shipping/{id}
+- POST /shipping
+- PATCH /shipping/{id}/status
+- GET /shipping/order/{orderId}
+
+Endpoint mejorables.
+
+Comunicación entre servicios:
+- orders-service puede consultar inventory-service para validar stock.
+- shipping-service puede consultar orders-service para obtener datos de despacho.
+- Los servicios no deben consultar directamente bases de datos ajenas.
+- Usar HTTP REST o cliente declarativo como OpenFeign si se implementa.
+- Proteger llamadas entre servicios con token o configuración interna.
+- Usar Circuit Breaker en llamadas entre servicios.
+
+Ejemplo de flujo de pedido:
+1. Cliente crea pedido desde React.
+2. React envía POST /orders al API Gateway.
+3. API Gateway valida JWT.
+4. orders-service recibe la solicitud.
+5. orders-service consulta inventory-service para validar stock.
+6. Si hay stock, crea el pedido.
+7. Puede actualizar estado del pedido.
+8. shipping-service coordina el despacho cuando corresponda.
+
+Seguridad:
+- Usar Spring Security.
+- Usar BCrypt para guardar contraseñas.
+- Nunca guardar contraseñas en texto plano.
+- Validar JWT en API Gateway.
+- Aplicar autorización por roles.
+- Proteger endpoints administrativos.
+- Aplicar principio de mínimo privilegio.
+- No devolver password en respuestas.
+- No exponer información sensible en logs.
+
+Resiliencia:
+- Usar Resilience4j con Circuit Breaker.
+- Aplicar Circuit Breaker en llamadas:
+  - orders-service → inventory-service.
+  - shipping-service → orders-service.
+  - shipping-service → transportistas externos.
+- Definir respuestas controladas cuando un servicio no esté disponible.
+
+Buenas prácticas de código:
+- Controladores solo reciben y responden solicitudes.
+- Servicios contienen la lógica de negocio.
+- Repositories acceden a la base de datos.
+- DTOs separan la API de las entidades.
+- Exceptions centralizadas con ControllerAdvice.
+- Nombres claros y consistentes.
+- Código preparado para pruebas unitarias.
+- No mezclar responsabilidades entre módulos.
+
+Objetivo del agente:
+Ayudar a implementar, corregir y mantener el código del proyecto SmartLogix respetando esta arquitectura. Antes de proponer cambios, explicar:
+1. Qué archivos se modificarían.
+2. Qué se agregaría.
+3. Qué impacto tendría el cambio.
+4. Qué dependencias serían necesarias.
+5. Qué riesgos o ajustes adicionales podrían aparecer.
+
+Cuando generes código:
+- Entregarlo listo para copiar y pegar.
+- Indicar ruta exacta del archivo.
+- Explicar brevemente el propósito del archivo.
+- Indicar si requiere modificar application.properties, pom.xml, configuración de seguridad.
+- Agrega comentarios en codigo
+- No asumir que existen clases si no han sido creadas.
+- Mantener compatibilidad con Spring Boot, React, Mysql, JWT, Spring Security.

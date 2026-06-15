@@ -1,4 +1,4 @@
-package com.api.pedidos.service;
+﻿package com.api.pedidos.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -57,6 +57,7 @@ class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
+    // Guia: valida create order validates inventory reserves stock and saves confirmed order.
     @Test
     void createOrderValidatesInventoryReservesStockAndSavesConfirmedOrder() {
         UUID customerId = UUID.randomUUID();
@@ -78,6 +79,7 @@ class OrderServiceTest {
         verify(inventoryClient).reserveStock(productId, 2);
     }
 
+    // Guia: valida create order rejects duplicated sku before calling inventory.
     @Test
     void createOrderRejectsDuplicatedSkuBeforeCallingInventory() {
         OrderCreateRequest request = new OrderCreateRequest(
@@ -95,6 +97,7 @@ class OrderServiceTest {
         verify(orderRepository, never()).save(any());
     }
 
+    // Guia: valida admin can create order for cliente user.
     @Test
     void adminCanCreateOrderForClienteUser() {
         UUID adminId = UUID.randomUUID();
@@ -116,6 +119,7 @@ class OrderServiceTest {
         verify(authUserClient).findUserById(customerId, "Bearer token");
     }
 
+    // Guia: valida non admin cannot create order for another customer.
     @Test
     void nonAdminCannotCreateOrderForAnotherCustomer() {
         UUID customerId = UUID.randomUUID();
@@ -133,6 +137,7 @@ class OrderServiceTest {
         verify(orderRepository, never()).save(any());
     }
 
+    // Guia: valida admin cannot assign order to non cliente user.
     @Test
     void adminCannotAssignOrderToNonClienteUser() {
         UUID customerId = UUID.randomUUID();
@@ -160,6 +165,7 @@ class OrderServiceTest {
         verify(orderRepository, never()).save(any());
     }
 
+    // Guia: valida cancel confirmed order releases reserved stock.
     @Test
     void cancelConfirmedOrderReleasesReservedStock() {
         UUID orderId = UUID.randomUUID();
@@ -176,6 +182,7 @@ class OrderServiceTest {
         verify(inventoryClient).releaseReservedStock(productId, 3);
     }
 
+    // Guia: valida ship confirmed order confirms reserved stock for operators.
     @Test
     void shipConfirmedOrderConfirmsReservedStockForOperators() {
         UUID orderId = UUID.randomUUID();
@@ -193,6 +200,7 @@ class OrderServiceTest {
         verify(inventoryClient).confirmReservedStock(productId, 3);
     }
 
+    // Guia: valida shipping operator can search operational orders without customer restriction.
     @Test
     void shippingOperatorCanSearchOperationalOrdersWithoutCustomerRestriction() {
         when(orderRepository.search(isNull(), eq(OrderStatus.SHIPPED), any(Pageable.class)))
@@ -203,6 +211,7 @@ class OrderServiceTest {
         verify(orderRepository).search(isNull(), eq(OrderStatus.SHIPPED), any(Pageable.class));
     }
 
+    // Guia: valida shipping operator cannot update order status.
     @Test
     void shippingOperatorCannotUpdateOrderStatus() {
         assertThatThrownBy(() -> orderService.updateStatus(

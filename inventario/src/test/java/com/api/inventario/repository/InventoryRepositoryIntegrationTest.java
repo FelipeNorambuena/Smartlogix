@@ -1,4 +1,4 @@
-package com.api.inventario.repository;
+﻿package com.api.inventario.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,6 +37,7 @@ class InventoryRepositoryIntegrationTest {
     @Autowired
     private InventoryRepository inventoryRepository;
 
+    // Guia: valida persists product and inventory relation.
     @Test
     void persistsProductAndInventoryRelation() {
         // Valida la relacion uno a uno y fechas generadas por callbacks JPA.
@@ -61,6 +62,7 @@ class InventoryRepositoryIntegrationTest {
         assertThat(found.get().getUpdatedAt()).isNotNull();
     }
 
+    // Guia: valida find by active true excludes inactive products.
     @Test
     void findByActiveTrueExcludesInactiveProducts() {
         // Valida la consulta usada por GET /api/products.
@@ -76,6 +78,7 @@ class InventoryRepositoryIntegrationTest {
                 .doesNotContain("SLX-INACTIVE");
     }
 
+    // Guia: valida find by product id for update returns inventory with product.
     @Test
     void findByProductIdForUpdateReturnsInventoryWithProduct() {
         // Valida la consulta con bloqueo usada por operaciones transaccionales de stock.
@@ -95,6 +98,7 @@ class InventoryRepositoryIntegrationTest {
         assertThat(lockedInventory.get().getProduct().getName()).isEqualTo("Producto " + savedProduct.getSku());
     }
 
+    // Guia: valida searches products and inventory with filters and pagination.
     @Test
     void searchesProductsAndInventoryWithFiltersAndPagination() {
         // Valida queries paginadas usadas por los listados publicos.

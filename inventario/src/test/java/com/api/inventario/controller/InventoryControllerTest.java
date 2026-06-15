@@ -1,4 +1,4 @@
-package com.api.inventario.controller;
+﻿package com.api.inventario.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,6 +41,7 @@ class InventoryControllerTest {
     @MockitoBean
     private InventoryService inventoryService;
 
+    // Guia: valida find all returns inventory rows.
     @Test
     void findAllReturnsInventoryRows() throws Exception {
         // Verifica que GET /api/inventory responda una pagina con stock por producto.
@@ -58,6 +59,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.page").value(0));
     }
 
+    // Guia: valida find all passes filters and pagination.
     @Test
     void findAllPassesFiltersAndPagination() throws Exception {
         // Verifica filtros de SKU, ubicacion, bajo stock y paginacion.
@@ -75,6 +77,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.content[0].sku").value("SLX-001"));
     }
 
+    // Guia: valida find inventory by product id returns inventory.
     @Test
     void findInventoryByProductIdReturnsInventory() throws Exception {
         // Verifica consulta detallada de inventario usando el id del producto.
@@ -89,6 +92,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.productId").value(productId.toString()));
     }
 
+    // Guia: valida get stock returns availability.
     @Test
     void getStockReturnsAvailability() throws Exception {
         // Verifica la vista resumida de disponibilidad: stock libre y reposicion.
@@ -109,6 +113,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.stockFree").value(15));
     }
 
+    // Guia: valida check availability returns requested quantity and availability.
     @Test
     void checkAvailabilityReturnsRequestedQuantityAndAvailability() throws Exception {
         // Verifica consulta de disponibilidad por cantidad para pedidos.
@@ -134,6 +139,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.available").value(true));
     }
 
+    // Guia: valida check availability rejects missing quantity.
     @Test
     void checkAvailabilityRejectsMissingQuantity() throws Exception {
         // Verifica contrato JSON cuando falta un query param requerido.
@@ -145,6 +151,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.details.quantity").exists());
     }
 
+    // Guia: valida update inventory returns updated values.
     @Test
     void updateInventoryReturnsUpdatedValues() throws Exception {
         // Verifica que el update use valores absolutos de stock, no incrementos.
@@ -163,6 +170,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.stockReserved").value(5));
     }
 
+    // Guia: valida update inventory rejects invalid payload.
     @Test
     void updateInventoryRejectsInvalidPayload() throws Exception {
         // Verifica validaciones de DTO para evitar stock negativo en la API.
@@ -183,6 +191,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.message").value("La solicitud contiene datos invalidos"));
     }
 
+    // Guia: valida reserve stock returns updated stock.
     @Test
     void reserveStockReturnsUpdatedStock() throws Exception {
         // Verifica endpoint que aumenta stock reservado.
@@ -200,6 +209,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.stockFree").value(11));
     }
 
+    // Guia: valida release reserved stock returns updated stock.
     @Test
     void releaseReservedStockReturnsUpdatedStock() throws Exception {
         // Verifica endpoint que libera reservas.
@@ -216,6 +226,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.stockFree").value(15));
     }
 
+    // Guia: valida confirm reserved stock returns updated stock.
     @Test
     void confirmReservedStockReturnsUpdatedStock() throws Exception {
         // Verifica endpoint que confirma venta y descuenta inventario total.
@@ -233,6 +244,7 @@ class InventoryControllerTest {
                 .andExpect(jsonPath("$.stockFree").value(12));
     }
 
+    // Guia: valida reserve stock rejects invalid quantity.
     @Test
     void reserveStockRejectsInvalidQuantity() throws Exception {
         // Valida el body comun de operaciones de stock.
