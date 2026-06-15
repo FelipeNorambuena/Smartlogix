@@ -1,4 +1,4 @@
-package com.api.envios.service;
+﻿package com.api.envios.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,6 +47,7 @@ class ShipmentServiceTest {
     @InjectMocks
     private ShipmentService shipmentService;
 
+    // Guia: valida create validates confirmed order uses order address and registers initial event.
     @Test
     void createValidatesConfirmedOrderUsesOrderAddressAndRegistersInitialEvent() {
         UUID orderId = UUID.randomUUID();
@@ -76,6 +77,7 @@ class ShipmentServiceTest {
         assertThat(eventCaptor.getValue().getDescription()).isEqualTo("Envio creado");
     }
 
+    // Guia: valida create from shipped order starts in transit and registers event.
     @Test
     void createFromShippedOrderStartsInTransitAndRegistersEvent() {
         UUID orderId = UUID.randomUUID();
@@ -103,6 +105,7 @@ class ShipmentServiceTest {
         assertThat(eventCaptor.getValue().getOccurredAt()).isEqualTo(response.shippedAt());
     }
 
+    // Guia: valida create rejects order that is not confirmed.
     @Test
     void createRejectsOrderThatIsNotConfirmed() {
         UUID orderId = UUID.randomUUID();
@@ -122,6 +125,7 @@ class ShipmentServiceTest {
         verify(shipmentEventRepository, never()).save(any());
     }
 
+    // Guia: valida create rejects duplicated shipment for order.
     @Test
     void createRejectsDuplicatedShipmentForOrder() {
         UUID orderId = UUID.randomUUID();
@@ -141,6 +145,7 @@ class ShipmentServiceTest {
         verify(shipmentRepository, never()).save(any());
     }
 
+    // Guia: valida update status to in transit sets shipped at and registers event.
     @Test
     void updateStatusToInTransitSetsShippedAtAndRegistersEvent() {
         UUID shipmentId = UUID.randomUUID();
@@ -167,6 +172,7 @@ class ShipmentServiceTest {
         assertThat(eventCaptor.getValue().getLocation()).isEqualTo("CD Santiago");
     }
 
+    // Guia: valida update status rejects invalid transition.
     @Test
     void updateStatusRejectsInvalidTransition() {
         UUID shipmentId = UUID.randomUUID();

@@ -1,4 +1,4 @@
-package com.api.pedidos.controller;
+﻿package com.api.pedidos.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,6 +36,7 @@ class OrderControllerTest {
     @Mock
     private OrderService orderService;
 
+    // Guia: valida create order returns created location and delegates authorization.
     @Test
     void createOrderReturnsCreatedLocationAndDelegatesAuthorization() {
         OrderController controller = new OrderController(orderService);
@@ -61,6 +62,7 @@ class OrderControllerTest {
         assertThat(response.getBody().id()).isEqualTo(orderId);
     }
 
+    // Guia: valida find all builds user context and passes pagination filters.
     @Test
     void findAllBuildsUserContextAndPassesPaginationFilters() {
         OrderController controller = new OrderController(orderService);
@@ -85,6 +87,7 @@ class OrderControllerTest {
         assertThat(contextCaptor.getValue().roles()).containsExactly("OPERADOR_PEDIDOS");
     }
 
+    // Guia: valida endpoints delegate to service with parsed user context.
     @Test
     void endpointsDelegateToServiceWithParsedUserContext() {
         OrderController controller = new OrderController(orderService);

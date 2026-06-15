@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiRequest } from './apiClient'
 
 describe('apiRequest', () => {
@@ -10,6 +10,7 @@ describe('apiRequest', () => {
     vi.unstubAllGlobals()
   })
 
+  // Guia: valida que sends JSON body and Bearer token through the API Gateway.
   it('sends JSON body and Bearer token through the API Gateway', async () => {
     fetch.mockResolvedValue(
       new Response(JSON.stringify({ id: 'order-1' }), {
@@ -37,6 +38,7 @@ describe('apiRequest', () => {
     )
   })
 
+  // Guia: valida que uses API error message when the backend returns a JSON error body.
   it('uses API error message when the backend returns a JSON error body', async () => {
     fetch.mockResolvedValue(
       new Response(JSON.stringify({ message: 'No tienes permisos' }), {
@@ -49,6 +51,7 @@ describe('apiRequest', () => {
     )
   })
 
+  // Guia: valida que returns null for valid empty responses.
   it('returns null for valid empty responses', async () => {
     fetch.mockResolvedValue(new Response(null, { status: 204 }))
 

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AUTH_STORAGE_KEY } from '../constants/authConstants'
 import {
   clearStoredSession,
@@ -18,6 +18,7 @@ describe('authSessionStorage', () => {
     vi.useRealTimers()
   })
 
+  // Guia: valida que stores remembered sessions in localStorage only.
   it('stores remembered sessions in localStorage only', () => {
     const session = persistSession(authData(), true)
 
@@ -28,6 +29,7 @@ describe('authSessionStorage', () => {
     expect(sessionStorage.getItem(AUTH_STORAGE_KEY)).toBeNull()
   })
 
+  // Guia: valida que stores temporary sessions in sessionStorage only.
   it('stores temporary sessions in sessionStorage only', () => {
     persistSession(authData(), false)
 
@@ -35,6 +37,7 @@ describe('authSessionStorage', () => {
     expect(sessionStorage.getItem(AUTH_STORAGE_KEY)).toContain('jwt-token')
   })
 
+  // Guia: valida que loads a stored session and cleans corrupt JSON.
   it('loads a stored session and cleans corrupt JSON', () => {
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData()))
 
@@ -45,6 +48,7 @@ describe('authSessionStorage', () => {
     expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull()
   })
 
+  // Guia: valida que clears both storage locations.
   it('clears both storage locations', () => {
     localStorage.setItem(AUTH_STORAGE_KEY, 'local')
     sessionStorage.setItem(AUTH_STORAGE_KEY, 'session')

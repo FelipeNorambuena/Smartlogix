@@ -1,4 +1,4 @@
-package com.api.envios.controller;
+﻿package com.api.envios.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,6 +31,7 @@ class ShipmentControllerTest {
     @Mock
     private ShipmentService shipmentService;
 
+    // Guia: valida create returns created location.
     @Test
     void createReturnsCreatedLocation() {
         ShipmentController controller = new ShipmentController(shipmentService);
@@ -48,6 +49,7 @@ class ShipmentControllerTest {
         assertThat(response.getBody()).isSameAs(shipment);
     }
 
+    // Guia: valida endpoints delegate to shipment service.
     @Test
     void endpointsDelegateToShipmentService() {
         ShipmentController controller = new ShipmentController(shipmentService);

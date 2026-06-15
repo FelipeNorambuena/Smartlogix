@@ -1,4 +1,4 @@
-package com.api.pedidos.exception;
+﻿package com.api.pedidos.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,6 +25,7 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
     private final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/orders");
 
+    // Guia: valida maps known domain exceptions to expected statuses.
     @Test
     void mapsKnownDomainExceptionsToExpectedStatuses() {
         assertResponse(handler.handleNotFound(new ResourceNotFoundException("no existe"), request),
@@ -42,6 +43,7 @@ class GlobalExceptionHandlerTest {
                 HttpStatus.FORBIDDEN, "sin permiso");
     }
 
+    // Guia: valida maps request and infrastructure exceptions to stable responses.
     @Test
     void mapsRequestAndInfrastructureExceptionsToStableResponses() {
         assertResponse(handler.handleMissingRequestParameter(
@@ -60,6 +62,7 @@ class GlobalExceptionHandlerTest {
                 HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor");
     }
 
+    // Guia: valida method not supported includes allow header detail.
     @Test
     void methodNotSupportedIncludesAllowHeaderDetail() {
         ResponseEntity<ApiErrorResponse> response = handler.handleMethodNotSupported(

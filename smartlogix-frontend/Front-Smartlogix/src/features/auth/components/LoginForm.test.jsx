@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react'
+﻿import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import LoginForm from './LoginForm'
 
 describe('LoginForm', () => {
+  // Guia: valida que renders login mode and calls submit handlers.
   it('renders login mode and calls submit handlers', async () => {
     const user = userEvent.setup()
     const onInputChange = vi.fn()
@@ -41,6 +42,7 @@ describe('LoginForm', () => {
     expect(onShowPasswordReset).toHaveBeenCalled()
   })
 
+  // Guia: valida que renders password reset mode and exposes validation messages.
   it('renders password reset mode and exposes validation messages', async () => {
     const user = userEvent.setup()
     const onPasswordResetSubmit = vi.fn((event) => event.preventDefault())

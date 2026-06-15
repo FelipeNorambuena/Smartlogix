@@ -1,4 +1,4 @@
-package com.api.pedidos.config;
+﻿package com.api.pedidos.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,11 +21,13 @@ class InventoryClientConfigTest {
 
     private final InventoryClientConfig config = new InventoryClientConfig();
 
+    // Guia: valida creates inventory rest client.
     @Test
     void createsInventoryRestClient() {
         assertThat(config.inventoryRestClient("http://localhost:8082")).isNotNull();
     }
 
+    // Guia: valida inventory circuit breaker records only availability failures.
     @Test
     void inventoryCircuitBreakerRecordsOnlyAvailabilityFailures() {
         CircuitBreaker circuitBreaker = config.inventoryCircuitBreaker();

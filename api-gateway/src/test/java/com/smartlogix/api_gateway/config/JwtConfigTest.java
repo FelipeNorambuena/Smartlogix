@@ -1,4 +1,4 @@
-package com.smartlogix.api_gateway.config;
+﻿package com.smartlogix.api_gateway.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,6 +26,7 @@ class JwtConfigTest {
 
     private final JwtConfig jwtConfig = new JwtConfig();
 
+    // Guia: valida jwt secret key rejects short secrets.
     @Test
     void jwtSecretKeyRejectsShortSecrets() {
         assertThatThrownBy(() -> jwtConfig.jwtSecretKey("short-secret"))
@@ -33,6 +34,7 @@ class JwtConfigTest {
                 .hasMessageContaining("al menos 32 bytes");
     }
 
+    // Guia: valida jwt decoder accepts token with configured issuer.
     @Test
     void jwtDecoderAcceptsTokenWithConfiguredIssuer() {
         String secret = "smartlogix-auth-test-secret-12345678901234567890";

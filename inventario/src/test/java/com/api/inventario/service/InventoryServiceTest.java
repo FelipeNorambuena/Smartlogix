@@ -1,4 +1,4 @@
-package com.api.inventario.service;
+﻿package com.api.inventario.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +38,7 @@ class InventoryServiceTest {
     @InjectMocks
     private InventoryService inventoryService;
 
+    // Guia: valida update by product id stores absolute values.
     @Test
     void updateByProductIdStoresAbsoluteValues() {
         // Verifica que el update guarde los valores recibidos como cantidades absolutas.
@@ -59,6 +60,7 @@ class InventoryServiceTest {
         assertThat(response.reorderPoint()).isEqualTo(3);
     }
 
+    // Guia: valida update by product id creates inventory when missing.
     @Test
     void updateByProductIdCreatesInventoryWhenMissing() {
         // Si el producto existe pero no tiene inventario, el service crea la fila.
@@ -78,6 +80,7 @@ class InventoryServiceTest {
         assertThat(response.warehouseLocation()).isEqualTo("Valparaiso");
     }
 
+    // Guia: valida update by product id rejects reserved greater than available.
     @Test
     void updateByProductIdRejectsReservedGreaterThanAvailable() {
         // Regla principal de consistencia: no se puede reservar mas de lo disponible.
@@ -89,6 +92,7 @@ class InventoryServiceTest {
                 .hasMessageContaining("stock reservado no puede superar");
     }
 
+    // Guia: valida find stock by product id calculates free stock and reorder status.
     @Test
     void findStockByProductIdCalculatesFreeStockAndReorderStatus() {
         // Verifica calculo de stock libre y alerta de reposicion.
@@ -105,6 +109,7 @@ class InventoryServiceTest {
         assertThat(response.belowReorderPoint()).isTrue();
     }
 
+    // Guia: valida find stock by product id rejects missing inventory.
     @Test
     void findStockByProductIdRejectsMissingInventory() {
         // Diferencia producto existente de inventario aun no creado.
@@ -119,6 +124,7 @@ class InventoryServiceTest {
                 .hasMessageContaining("Inventario no encontrado para producto " + productId);
     }
 
+    // Guia: valida check availability returns true when free stock covers quantity.
     @Test
     void checkAvailabilityReturnsTrueWhenFreeStockCoversQuantity() {
         // Permite validar disponibilidad sin modificar inventario.
@@ -137,6 +143,7 @@ class InventoryServiceTest {
         assertThat(response.available()).isTrue();
     }
 
+    // Guia: valida reserve stock increases reserved when free stock is enough.
     @Test
     void reserveStockIncreasesReservedWhenFreeStockIsEnough() {
         // Reserva unidades sin alterar el stock total disponible.
@@ -155,6 +162,7 @@ class InventoryServiceTest {
         assertThat(response.stockFree()).isEqualTo(11);
     }
 
+    // Guia: valida reserve stock rejects insufficient free stock.
     @Test
     void reserveStockRejectsInsufficientFreeStock() {
         // Evita sobre-reservar cuando el stock libre no alcanza.
@@ -170,6 +178,7 @@ class InventoryServiceTest {
                 .hasMessageContaining("Stock insuficiente");
     }
 
+    // Guia: valida reserve stock rejects inactive product.
     @Test
     void reserveStockRejectsInactiveProduct() {
         // Un producto con baja logica no debe poder reservarse para nuevos pedidos.
@@ -186,6 +195,7 @@ class InventoryServiceTest {
                 .hasMessageContaining("producto inactivo");
     }
 
+    // Guia: valida release reserved stock decreases only reserved stock.
     @Test
     void releaseReservedStockDecreasesOnlyReservedStock() {
         // La liberacion revierte reservas sin sumar stock total.
@@ -204,6 +214,7 @@ class InventoryServiceTest {
         assertThat(response.stockFree()).isEqualTo(15);
     }
 
+    // Guia: valida release reserved stock rejects quantity greater than reserved.
     @Test
     void releaseReservedStockRejectsQuantityGreaterThanReserved() {
         // No se puede liberar una cantidad que nunca estuvo reservada.
@@ -219,6 +230,7 @@ class InventoryServiceTest {
                 .hasMessageContaining("mas stock del que esta reservado");
     }
 
+    // Guia: valida confirm reserved stock decreases available and reserved stock.
     @Test
     void confirmReservedStockDecreasesAvailableAndReservedStock() {
         // Confirmar una venta descuenta tanto el total como la reserva.
@@ -237,6 +249,7 @@ class InventoryServiceTest {
         assertThat(response.stockFree()).isEqualTo(12);
     }
 
+    // Guia: valida confirm reserved stock rejects quantity greater than reserved.
     @Test
     void confirmReservedStockRejectsQuantityGreaterThanReserved() {
         // Obliga a que el pedido haya reservado unidades antes de confirmar venta.
@@ -252,6 +265,7 @@ class InventoryServiceTest {
                 .hasMessageContaining("mas stock del que esta reservado");
     }
 
+    // Guia: valida stock operations reject invalid quantity.
     @Test
     void stockOperationsRejectInvalidQuantity() {
         // Valida tambien a nivel service para llamadas internas, no solo HTTP.

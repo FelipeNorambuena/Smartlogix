@@ -1,4 +1,4 @@
-package com.api.inventario.controller;
+﻿package com.api.inventario.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,6 +45,7 @@ class ProductControllerTest {
     @MockitoBean
     private ProductService productService;
 
+    // Guia: valida find all returns active products.
     @Test
     void findAllReturnsActiveProducts() throws Exception {
         // Verifica que GET /api/products responda una pagina JSON de productos.
@@ -61,6 +62,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.size").value(20));
     }
 
+    // Guia: valida find all passes filters and pagination.
     @Test
     void findAllPassesFiltersAndPagination() throws Exception {
         // Verifica filtros de busqueda y paginacion del listado de productos.
@@ -79,6 +81,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.page").value(0));
     }
 
+    // Guia: valida get product returns not found.
     @Test
     void getProductReturnsNotFound() throws Exception {
         // Verifica que una excepcion del service se traduzca a HTTP 404.
@@ -91,6 +94,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.message").value("Producto no encontrado con id " + productId));
     }
 
+    // Guia: valida find product by sku returns product.
     @Test
     void findProductBySkuReturnsProduct() throws Exception {
         // Verifica busqueda por SKU usando una ruta distinta a la busqueda por UUID.
@@ -104,6 +108,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.sku").value("SLX-999"));
     }
 
+    // Guia: valida get next sku returns suggested sku.
     @Test
     void getNextSkuReturnsSuggestedSku() throws Exception {
         // Verifica el endpoint usado por el frontend para mostrar el proximo SKU.
@@ -114,6 +119,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.sku").value("SKU-000001"));
     }
 
+    // Guia: valida create product returns created.
     @Test
     void createProductReturnsCreated() throws Exception {
         // Verifica que el alta de producto responda 201 Created y devuelva el body.
@@ -135,6 +141,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.sku").value("SLX-999"));
     }
 
+    // Guia: valida create product rejects invalid payload.
     @Test
     void createProductRejectsInvalidPayload() throws Exception {
         // Verifica validaciones del DTO antes de llamar a la capa de negocio.
@@ -155,6 +162,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.details.unitPrice").exists());
     }
 
+    // Guia: valida get product rejects invalid uuid.
     @Test
     void getProductRejectsInvalidUuid() throws Exception {
         // Verifica que UUID invalido mantenga el formato JSON comun de errores.
@@ -164,6 +172,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.details.id").exists());
     }
 
+    // Guia: valida create product rejects malformed json.
     @Test
     void createProductRejectsMalformedJson() throws Exception {
         // Verifica que JSON mal formado no exponga errores internos.
@@ -181,6 +190,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.message").value("JSON de solicitud invalido o mal formado"));
     }
 
+    // Guia: valida update product returns updated values.
     @Test
     void updateProductReturnsUpdatedValues() throws Exception {
         // Verifica que PUT /api/products/{id} responda los valores actualizados.
@@ -203,6 +213,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.name").value("Producto actualizado"));
     }
 
+    // Guia: valida delete product returns no content.
     @Test
     void deleteProductReturnsNoContent() throws Exception {
         // Verifica baja logica expuesta como HTTP 204 No Content.

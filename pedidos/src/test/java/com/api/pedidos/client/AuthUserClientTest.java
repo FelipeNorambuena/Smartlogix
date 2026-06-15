@@ -1,4 +1,4 @@
-package com.api.pedidos.client;
+﻿package com.api.pedidos.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
  */
 class AuthUserClientTest {
 
+    // Guia: valida find user by id rejects missing authorization header before calling auth.
     @Test
     void findUserByIdRejectsMissingAuthorizationHeaderBeforeCallingAuth() {
         AuthUserClient client = new AuthUserClient(
@@ -29,6 +30,7 @@ class AuthUserClientTest {
                 .hasMessageContaining("token");
     }
 
+    // Guia: valida has role is case insensitive and handles null roles.
     @Test
     void hasRoleIsCaseInsensitiveAndHandlesNullRoles() {
         AuthUserResponse user = new AuthUserResponse(

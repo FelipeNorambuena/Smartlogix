@@ -1,4 +1,4 @@
-package com.smartlogix.auth.service;
+﻿package com.smartlogix.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,6 +53,7 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
+    // Guia: valida register normalizes email assigns cliente role and returns bearer token.
     @Test
     void registerNormalizesEmailAssignsClienteRoleAndReturnsBearerToken() {
         RegisterRequest request = new RegisterRequest(
@@ -90,6 +91,7 @@ class AuthServiceTest {
         assertThat(userCaptor.getValue().getLastName()).isEqualTo("Demo");
     }
 
+    // Guia: valida register rejects duplicated email.
     @Test
     void registerRejectsDuplicatedEmail() {
         RegisterRequest request = new RegisterRequest(
@@ -105,6 +107,7 @@ class AuthServiceTest {
                 .hasMessageContaining("Ya existe un usuario");
     }
 
+    // Guia: valida login validates password and returns token for enabled user.
     @Test
     void loginValidatesPasswordAndReturnsTokenForEnabledUser() {
         User user = user(UUID.randomUUID(), "admin@smartlogix.com", "hash-admin", true, role("ADMIN"));
@@ -120,6 +123,7 @@ class AuthServiceTest {
         assertThat(response.user().roles()).containsExactly("ADMIN");
     }
 
+    // Guia: valida login rejects invalid password.
     @Test
     void loginRejectsInvalidPassword() {
         User user = user(UUID.randomUUID(), "cliente@smartlogix.com", "hash-cliente", true, role("CLIENTE"));
@@ -131,6 +135,7 @@ class AuthServiceTest {
                 .isInstanceOf(InvalidCredentialsException.class);
     }
 
+    // Guia: valida login rejects disabled user.
     @Test
     void loginRejectsDisabledUser() {
         User user = user(UUID.randomUUID(), "cliente@smartlogix.com", "hash-cliente", false, role("CLIENTE"));
@@ -142,6 +147,7 @@ class AuthServiceTest {
                 .isInstanceOf(UserDisabledException.class);
     }
 
+    // Guia: valida reset password stores encoded password.
     @Test
     void resetPasswordStoresEncodedPassword() {
         User user = user(UUID.randomUUID(), "cliente@smartlogix.com", "hash-antiguo", true, role("CLIENTE"));

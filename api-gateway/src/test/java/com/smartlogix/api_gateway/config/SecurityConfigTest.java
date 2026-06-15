@@ -1,4 +1,4 @@
-package com.smartlogix.api_gateway.config;
+﻿package com.smartlogix.api_gateway.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,6 +16,7 @@ class SecurityConfigTest {
 
     private final SecurityConfig securityConfig = new SecurityConfig();
 
+    // Guia: valida jwt authentication converter maps smart logix roles to authorities.
     @Test
     void jwtAuthenticationConverterMapsSmartLogixRolesToAuthorities() {
         JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverter();
@@ -37,6 +38,7 @@ class SecurityConfigTest {
         assertThat(authorities).containsExactly("ROLE_ADMIN", "ROLE_OPERADOR_PEDIDOS");
     }
 
+    // Guia: valida jwt authentication converter handles tokens without roles.
     @Test
     void jwtAuthenticationConverterHandlesTokensWithoutRoles() {
         JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverter();

@@ -1,4 +1,4 @@
-package com.api.inventario.service;
+﻿package com.api.inventario.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +38,7 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
+    // Guia: valida create stores valid product.
     @Test
     void createStoresValidProduct() {
         // Verifica normalizacion del SKU y mapeo del request hacia la entidad.
@@ -60,6 +61,7 @@ class ProductServiceTest {
         assertThat(product.isActive()).isTrue();
     }
 
+    // Guia: valida create rejects duplicated sku.
     @Test
     void createRejectsDuplicatedSku() {
         // Verifica que no se permitan dos productos con el mismo SKU.
@@ -76,6 +78,7 @@ class ProductServiceTest {
                 .hasMessageContaining("Ya existe un producto con SKU SLX-001");
     }
 
+    // Guia: valida create generates sku when request does not provide one.
     @Test
     void createGeneratesSkuWhenRequestDoesNotProvideOne() {
         // Verifica que el alta pueda delegar el SKU automatico en la factory.
@@ -97,6 +100,7 @@ class ProductServiceTest {
         assertThat(productCaptor.getValue().getSku()).isEqualTo("SKU-000002");
     }
 
+    // Guia: valida soft delete marks product inactive.
     @Test
     void softDeleteMarksProductInactive() {
         // Verifica baja logica: el producto queda inactivo, no eliminado fisicamente.

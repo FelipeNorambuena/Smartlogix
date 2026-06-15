@@ -1,4 +1,4 @@
-package com.smartlogix.api_gateway.config;
+﻿package com.smartlogix.api_gateway.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
  */
 class GatewayRoutesConfigTest {
 
+    // Guia: valida inventory routes can be built.
     @Test
     void inventoryRoutesCanBeBuilt() {
         InventoryRoutesConfig config = new InventoryRoutesConfig();
@@ -18,6 +19,7 @@ class GatewayRoutesConfigTest {
         assertThat(config.inventoryStockRoute("http://localhost:8081", "inventory-key")).isNotNull();
     }
 
+    // Guia: valida orders route can be built.
     @Test
     void ordersRouteCanBeBuilt() {
         OrdersRoutesConfig config = new OrdersRoutesConfig();
@@ -25,6 +27,7 @@ class GatewayRoutesConfigTest {
         assertThat(config.ordersRoute("http://localhost:8084", "orders-key")).isNotNull();
     }
 
+    // Guia: valida shipping route can be built.
     @Test
     void shippingRouteCanBeBuilt() {
         ShippingRoutesConfig config = new ShippingRoutesConfig();

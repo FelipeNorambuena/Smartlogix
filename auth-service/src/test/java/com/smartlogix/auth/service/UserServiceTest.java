@@ -1,4 +1,4 @@
-package com.smartlogix.auth.service;
+﻿package com.smartlogix.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,6 +51,7 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    // Guia: valida create normalizes email uses default cliente role and encodes password.
     @Test
     void createNormalizesEmailUsesDefaultClienteRoleAndEncodesPassword() {
         Role cliente = role("CLIENTE");
@@ -85,6 +86,7 @@ class UserServiceTest {
         assertThat(userCaptor.getValue().getFirstName()).isEqualTo("Nuevo");
     }
 
+    // Guia: valida create rejects duplicated email.
     @Test
     void createRejectsDuplicatedEmail() {
         UserCreateRequest request = new UserCreateRequest(
@@ -102,6 +104,7 @@ class UserServiceTest {
                 .hasMessageContaining("Ya existe un usuario");
     }
 
+    // Guia: valida update rejects email already used by another user.
     @Test
     void updateRejectsEmailAlreadyUsedByAnotherUser() {
         UUID currentId = UUID.randomUUID();
@@ -119,6 +122,7 @@ class UserServiceTest {
                 .hasMessageContaining("Ya existe un usuario");
     }
 
+    // Guia: valida update roles normalizes role names and stores resolved roles.
     @Test
     void updateRolesNormalizesRoleNamesAndStoresResolvedRoles() {
         UUID userId = UUID.randomUUID();
@@ -138,6 +142,7 @@ class UserServiceTest {
         assertThat(user.getRoles()).containsExactlyInAnyOrder(admin, pedidos);
     }
 
+    // Guia: valida update roles rejects unknown role.
     @Test
     void updateRolesRejectsUnknownRole() {
         UUID userId = UUID.randomUUID();
@@ -153,6 +158,7 @@ class UserServiceTest {
                 .hasMessageContaining("Roles no encontrados");
     }
 
+    // Guia: valida update status disables user without deleting it.
     @Test
     void updateStatusDisablesUserWithoutDeletingIt() {
         UUID userId = UUID.randomUUID();
@@ -167,6 +173,7 @@ class UserServiceTest {
         verify(userRepository).save(user);
     }
 
+    // Guia: valida find entity by id with roles rejects missing user.
     @Test
     void findEntityByIdWithRolesRejectsMissingUser() {
         UUID userId = UUID.randomUUID();

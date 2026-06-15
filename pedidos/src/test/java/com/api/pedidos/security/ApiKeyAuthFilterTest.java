@@ -1,4 +1,4 @@
-package com.api.pedidos.security;
+﻿package com.api.pedidos.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -16,6 +16,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
  */
 class ApiKeyAuthFilterTest {
 
+    // Guia: valida disabled filter passes request through.
     @Test
     void disabledFilterPassesRequestThrough() throws Exception {
         ApiKeyAuthFilter filter = new ApiKeyAuthFilter("", "X-API-Key");
@@ -29,6 +30,7 @@ class ApiKeyAuthFilterTest {
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
+    // Guia: valida configured filter rejects missing api key.
     @Test
     void configuredFilterRejectsMissingApiKey() throws Exception {
         ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret", "X-API-Key");
@@ -43,6 +45,7 @@ class ApiKeyAuthFilterTest {
         verifyNoInteractions(chain);
     }
 
+    // Guia: valida configured filter accepts matching api key.
     @Test
     void configuredFilterAcceptsMatchingApiKey() throws Exception {
         ApiKeyAuthFilter filter = new ApiKeyAuthFilter("secret", "X-API-Key");

@@ -1,4 +1,4 @@
-package com.api.inventario.security;
+﻿package com.api.inventario.security;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -33,6 +33,7 @@ class ApiKeyAuthFilterTest {
     @MockitoBean
     private ProductService productService;
 
+    // Guia: valida rejects missing api key.
     @Test
     void rejectsMissingApiKey() throws Exception {
         mockMvc.perform(get("/api/products"))
@@ -40,6 +41,7 @@ class ApiKeyAuthFilterTest {
                 .andExpect(jsonPath("$.message").value("API key invalida o ausente"));
     }
 
+    // Guia: valida rejects invalid api key.
     @Test
     void rejectsInvalidApiKey() throws Exception {
         mockMvc.perform(get("/api/products")
@@ -48,6 +50,7 @@ class ApiKeyAuthFilterTest {
                 .andExpect(jsonPath("$.message").value("API key invalida o ausente"));
     }
 
+    // Guia: valida accepts valid api key.
     @Test
     void acceptsValidApiKey() throws Exception {
         when(productService.searchActive(null, null, null, 0, 20))

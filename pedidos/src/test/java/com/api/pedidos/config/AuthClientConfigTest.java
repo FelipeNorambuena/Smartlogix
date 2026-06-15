@@ -1,4 +1,4 @@
-package com.api.pedidos.config;
+﻿package com.api.pedidos.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,11 +21,13 @@ class AuthClientConfigTest {
 
     private final AuthClientConfig config = new AuthClientConfig();
 
+    // Guia: valida creates auth rest client.
     @Test
     void createsAuthRestClient() {
         assertThat(config.authRestClient("http://localhost:8081")).isNotNull();
     }
 
+    // Guia: valida auth circuit breaker records only availability failures.
     @Test
     void authCircuitBreakerRecordsOnlyAvailabilityFailures() {
         CircuitBreaker circuitBreaker = config.authCircuitBreaker();

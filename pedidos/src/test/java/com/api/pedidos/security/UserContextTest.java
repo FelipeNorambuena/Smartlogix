@@ -1,4 +1,4 @@
-package com.api.pedidos.security;
+﻿package com.api.pedidos.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
  */
 class UserContextTest {
 
+    // Guia: valida from headers normalizes roles and allows operational read.
     @Test
     void fromHeadersNormalizesRolesAndAllowsOperationalRead() {
         UUID userId = UUID.randomUUID();
@@ -30,6 +31,7 @@ class UserContextTest {
         assertThat(context.owns(userId)).isTrue();
     }
 
+    // Guia: valida from headers rejects missing user id.
     @Test
     void fromHeadersRejectsMissingUserId() {
         assertThatThrownBy(() -> UserContext.fromHeaders(" ", "CLIENTE"))
@@ -37,6 +39,7 @@ class UserContextTest {
                 .hasMessageContaining("identidad");
     }
 
+    // Guia: valida from headers rejects invalid user id.
     @Test
     void fromHeadersRejectsInvalidUserId() {
         assertThatThrownBy(() -> UserContext.fromHeaders("not-a-uuid", "CLIENTE"))
@@ -44,6 +47,7 @@ class UserContextTest {
                 .hasMessageContaining("invalida");
     }
 
+    // Guia: valida client role cannot manage operational orders.
     @Test
     void clientRoleCannotManageOperationalOrders() {
         UserContext context = new UserContext(UUID.randomUUID(), Set.of("CLIENTE"));
